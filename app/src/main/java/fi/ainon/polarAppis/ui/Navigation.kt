@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import fi.ainon.polarAppis.ui.dataitemtype.DataItemTypeScreen
+import fi.ainon.polarAppis.ui.sensorinit.DataItemTypeScreen
 
 @Composable
 fun MainNavigation() {

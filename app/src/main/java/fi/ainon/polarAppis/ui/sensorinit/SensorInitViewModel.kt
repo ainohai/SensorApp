@@ -14,32 +14,31 @@
  * limitations under the License.
  */
 
-package fi.ainon.polarAppis.ui.dataitemtype
+package fi.ainon.polarAppis.ui.sensorinit
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.Data
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkRequest
 import androidx.work.workDataOf
-import com.polar.sdk.api.PolarBleApi
 import com.polar.sdk.api.model.PolarSensorSetting
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import fi.ainon.polarAppis.communication.polar.PolarConnection
+import fi.ainon.polarAppis.data.DataItemTypeRepository
+import fi.ainon.polarAppis.ui.sensorinit.DataItemTypeUiState.Error
+import fi.ainon.polarAppis.ui.sensorinit.DataItemTypeUiState.Loading
+import fi.ainon.polarAppis.ui.sensorinit.DataItemTypeUiState.Success
+import fi.ainon.polarAppis.worker.SensorDataWorker
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
-import fi.ainon.polarAppis.data.DataItemTypeRepository
-import fi.ainon.polarAppis.ui.dataitemtype.DataItemTypeUiState.Error
-import fi.ainon.polarAppis.ui.dataitemtype.DataItemTypeUiState.Loading
-import fi.ainon.polarAppis.ui.dataitemtype.DataItemTypeUiState.Success
-import fi.ainon.polarAppis.worker.SensorDataWorker
 import java.util.EnumMap
 import javax.inject.Inject
 
@@ -50,6 +49,7 @@ class DataItemTypeViewModel @Inject constructor(
     private val polarConnection: PolarConnection,
 ) : ViewModel() {
 
+    val SENSORTAG = "polarSensorDataWorker"
 
     val uiState: StateFlow<DataItemTypeUiState> = dataItemTypeRepository
         .dataItemTypes.map<List<String>, DataItemTypeUiState>(::Success)
@@ -72,15 +72,38 @@ class DataItemTypeViewModel @Inject constructor(
 
     fun h10Setup() {
 
-        val uploadWorkRequest: WorkRequest =
+        val workManager = WorkManager.getInstance(appContext)
+
+        // We need to ensure, we are not starting multiple workers doing this.
+
+        if (isWorkerRunning(workManager)) {
+            // Cancellation here, as something is wrong, if this is tried.
+            workManager.cancelAllWorkByTag(SENSORTAG)
+        }
+        else {
+            createWorkRequest(workManager)
+        }
+    }
+
+    private fun isWorkerRunning(workManager: WorkManager): Boolean {
+        val workInfos = workManager.getWorkInfosByTag(SENSORTAG).get()
+
+        for (workInfo in workInfos) {
+            if (workInfo.state == WorkInfo.State.RUNNING) {
+                return true
+            }
+        }
+        return false
+    }
+
+    private fun createWorkRequest(workManager: WorkManager) {
+        val sensorWorkRequest: WorkRequest =
             OneTimeWorkRequestBuilder<SensorDataWorker>()
                 .setInputData(getH10SettingsWorkData())
+                .addTag(SENSORTAG)
                 .build()
 
-        WorkManager
-            .getInstance(appContext)
-            .enqueue(uploadWorkRequest)
-
+        workManager.enqueue(sensorWorkRequest)
     }
 
     fun acc() {

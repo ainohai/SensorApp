@@ -18,24 +18,20 @@ package fi.ainon.polarAppis
 
 import android.app.Application
 import androidx.work.Configuration
-import androidx.work.WorkManager
 import dagger.hilt.android.HiltAndroidApp
-import fi.ainon.polarAppis.worker.SensorWorkerFactory
+import fi.ainon.polarAppis.worker.factory.AppisDelegatingWorkerFactory
 import javax.inject.Inject
 
 @HiltAndroidApp
-class polarAppis : Application() {
+class polarAppis : Application(), Configuration.Provider {
 
     @Inject
-    lateinit var workerFactory: SensorWorkerFactory
+    lateinit var delegatingWorkerFactory: AppisDelegatingWorkerFactory
 
-    override fun onCreate() {
-        super.onCreate()
-        // Setup WorkManager configuration with custom HiltWorkerFactory
-        val configuration = Configuration.Builder()
-            .setWorkerFactory(workerFactory)
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder()
+            .setMinimumLoggingLevel(android.util.Log.INFO)
+            .setWorkerFactory(delegatingWorkerFactory)
             .build()
-        WorkManager.initialize(this, configuration)
 
-    }
 }

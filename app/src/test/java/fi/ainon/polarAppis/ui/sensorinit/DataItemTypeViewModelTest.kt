@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package fi.ainon.polarAppis.ui.dataitemtype
+package fi.ainon.polarAppis.ui.sensorinit
 
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi

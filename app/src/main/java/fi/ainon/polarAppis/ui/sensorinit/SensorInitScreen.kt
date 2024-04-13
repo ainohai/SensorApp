@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package fi.ainon.polarAppis.ui.dataitemtype
+package fi.ainon.polarAppis.ui.sensorinit
 
 import fi.ainon.polarAppis.ui.theme.MyApplicationTheme
 import androidx.compose.foundation.layout.Arrangement
