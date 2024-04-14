@@ -1,4 +1,4 @@
-package fi.ainon.polarAppis.ui.sensorinit
+package fi.ainon.polarAppis.worker.dataObject
 
 enum class DataType {
     HR,

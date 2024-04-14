@@ -1,17 +1,14 @@
 package fi.ainon.polarAppis.communication.dataServer
 
-import android.content.Context
 import android.util.Log
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
-import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import fi.ainon.polarAppis.BuildConfig
-import fi.ainon.polarAppis.worker.SensorData
-import kotlinx.serialization.Serializable
+import fi.ainon.polarAppis.worker.dataObject.DataType
+import fi.ainon.polarAppis.worker.dataObject.SensorData
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -22,7 +19,6 @@ import retrofit2.Retrofit
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
-import retrofit2.http.Query
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -71,9 +67,8 @@ internal object ServerDataConnectionModule {
 
 interface ServerDataConnection {
 
-    fun addData(data: ByteArray)
-
-    suspend fun getName(name: String? = null): String
+    fun addData(data: ByteArray, dataType: DataType)
+    suspend fun test(name: String? = null): String
 }
 
 
@@ -90,17 +85,16 @@ class DefaultServerConnection @Inject constructor(okhttpCallFactory: okhttp3.Cal
             .build()
             .create(ServerConnectionApi::class.java)
 
-    //TODO: CLEANUP!!!
-    override suspend fun getName(name: String?): String {
-        val pongi = networkApi.getRoot()
-        Log.d(TAG, pongi ?: "FOOBAZ")
 
-        return pongi ?: "FOOBAZ"
+    override suspend fun test(name: String?): String {
+        val pong = networkApi.getRoot()
+        Log.d(TAG, pong)
+        return pong
     }
 
     //TODO: Does handle only best case scenario.
-    override fun addData(data: ByteArray) {
-        val call = networkApi.addData(SensorData("ECG", data))
+    override fun addData(data: ByteArray, dataType: DataType) {
+        val call = networkApi.addData(SensorData(dataType.name, data))
 
         call?.enqueue(object : Callback<Void?> {
             override fun onResponse(call: retrofit2.Call<Void?>?, response: Response<Void?>?) {

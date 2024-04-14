@@ -34,6 +34,7 @@ import fi.ainon.polarAppis.ui.sensorinit.DataItemTypeUiState.Error
 import fi.ainon.polarAppis.ui.sensorinit.DataItemTypeUiState.Loading
 import fi.ainon.polarAppis.ui.sensorinit.DataItemTypeUiState.Success
 import fi.ainon.polarAppis.worker.SensorDataWorker
+import fi.ainon.polarAppis.worker.dataObject.DataType
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -75,7 +76,6 @@ class DataItemTypeViewModel @Inject constructor(
         val workManager = WorkManager.getInstance(appContext)
 
         // We need to ensure, we are not starting multiple workers doing this.
-
         if (isWorkerRunning(workManager)) {
             // Cancellation here, as something is wrong, if this is tried.
             workManager.cancelAllWorkByTag(SENSORTAG)
@@ -125,9 +125,9 @@ class DataItemTypeViewModel @Inject constructor(
         return workDataOf(
             PolarSensorSetting.SettingType.SAMPLE_RATE.name to "130",
             PolarSensorSetting.SettingType.RESOLUTION.name to "14",
-            DataType.HR.name to "false",
+            DataType.HR.name to "true",
             DataType.ECG.name to "true",
-            DataType.ACC.name to "false")
+            DataType.ACC.name to "true")
 
     }
 

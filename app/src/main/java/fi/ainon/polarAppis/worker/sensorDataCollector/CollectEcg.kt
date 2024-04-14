@@ -1,32 +1,22 @@
 package fi.ainon.polarAppis.worker.sensorDataCollector
 
 import android.util.Log
-import androidx.work.Data
-import androidx.work.ListenableWorker
 import com.polar.sdk.api.model.PolarEcgData
 import com.polar.sdk.api.model.PolarSensorSetting
 import fi.ainon.polarAppis.communication.polar.PolarConnection
 import fi.ainon.polarAppis.worker.DataHandler
-import fi.ainon.polarAppis.worker.EcgData
+import fi.ainon.polarAppis.worker.dataObject.EcgData
 
 
 class CollectEcg(
     private val dataHandler: DataHandler,
     private val polarConnection: PolarConnection,
-    private val inputData: Data
-) : CommonCollect() {
+    polarSettings: PolarSensorSetting
+) : CommonCollect(polarSettings) {
 
     private val TAG = "CollectEcg: "
 
-    override fun collectData() {
-        val polarSettings = createSettings()
-        streamEcg(polarSettings)
-    }
-
-    override fun stopCollect() {
-        dispose()
-    }
-    override fun streamEcg(polarSettings: PolarSensorSetting) {
+    override fun streamData(polarSettings: PolarSensorSetting) {
          val ecgDisposable = polarConnection.getEcg(polarSettings).subscribe(
             { polarEcgData: PolarEcgData ->
                 val samples = mutableListOf<EcgData.EcgDataSample>()
@@ -46,18 +36,5 @@ class CollectEcg(
 
     }
 
-    override fun createSettings(): PolarSensorSetting {
-        val resolution =
-            inputData.getString(PolarSensorSetting.SettingType.RESOLUTION.name) ?: ListenableWorker.Result.failure()
-        val sampleRate =
-            inputData.getString(PolarSensorSetting.SettingType.SAMPLE_RATE.name) ?: ListenableWorker.Result.failure()
 
-        val polarSettings = PolarSensorSetting(
-            mapOf(
-                Pair(PolarSensorSetting.SettingType.SAMPLE_RATE, (sampleRate as String).toInt()),
-                Pair(PolarSensorSetting.SettingType.RESOLUTION, (resolution as String).toInt()),
-            )
-        )
-        return polarSettings
-    }
 }

@@ -9,11 +9,21 @@ interface CollectSensorData {
     fun stopCollect()
 }
 
-abstract class CommonCollect : CollectSensorData {
+abstract class CommonCollect (private val polarSettings: PolarSensorSetting): CollectSensorData {
     private var disposable: Disposable? = null;
 
-    abstract fun streamEcg(polarSettings: PolarSensorSetting)
-    abstract fun createSettings(): PolarSensorSetting
+    init {
+        collectData()
+    }
+
+    override fun collectData() {
+        streamData(polarSettings)
+    }
+
+    override fun stopCollect() {
+        dispose()
+    }
+    abstract fun streamData(polarSettings: PolarSensorSetting)
 
     override fun isDisposed(): Boolean {
         return disposable?.isDisposed ?: true
