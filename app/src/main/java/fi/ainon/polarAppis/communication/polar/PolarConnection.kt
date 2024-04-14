@@ -17,7 +17,12 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import fi.ainon.polarAppis.BuildConfig
+import fi.ainon.polarAppis.worker.dataObject.ConnectionStatus
 import io.reactivex.rxjava3.core.Flowable
+import io.reactivex.rxjava3.disposables.Disposable
+import io.reactivex.rxjava3.functions.Action
+import io.reactivex.rxjava3.functions.Consumer
+import io.reactivex.rxjava3.subjects.PublishSubject
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -42,10 +47,15 @@ interface PolarConnection {
 
     fun onResume()
     fun onDestroy()
+    fun subscribeConnectionStatus(
+        onNext: Consumer<ConnectionStatus>,
+        onError: Consumer<Throwable>,
+        onComplete: Action
+    ): Disposable
 }
 
 
-class DefaultPolarConnection  @Inject constructor(
+class DefaultPolarConnection @Inject constructor(
     @ApplicationContext appContext: Context
 ) : PolarConnection {
 
@@ -54,6 +64,9 @@ class DefaultPolarConnection  @Inject constructor(
     private val TAG = "PolarConnection: "
 
     private var deviceConnected = false
+
+    //TODO
+    private var connectionStatus = PublishSubject.create<ConnectionStatus>()
 
     private val api: PolarBleApi by lazy {
         // Notice all features are enabled
@@ -76,7 +89,7 @@ class DefaultPolarConnection  @Inject constructor(
         apiSetup();
     }
 
-    private fun apiSetup () {
+    private fun apiSetup() {
         api.setApiLogger { s: String -> Log.d(API_LOGGER_TAG, s) }
 
         api.setApiCallback(object : PolarBleApiCallback() {
@@ -89,22 +102,26 @@ class DefaultPolarConnection  @Inject constructor(
                 Log.d(TAG, "CONNECTED: ${polarDeviceInfo.deviceId}")
                 DEVICE_ID = polarDeviceInfo.deviceId
                 deviceConnected = true
+                connectionStatus.onNext(ConnectionStatus.CONNECTED)
 
             }
 
             override fun deviceConnecting(polarDeviceInfo: PolarDeviceInfo) {
                 Log.d(TAG, "CONNECTING: ${polarDeviceInfo.deviceId}")
+                connectionStatus.onNext(ConnectionStatus.CONNECTED)
 
             }
 
             override fun deviceDisconnected(polarDeviceInfo: PolarDeviceInfo) {
                 Log.d(TAG, "DISCONNECTED: ${polarDeviceInfo.deviceId}")
                 deviceConnected = false
+                connectionStatus.onNext(ConnectionStatus.DISCONNECTED)
 
             }
 
             override fun disInformationReceived(identifier: String, uuid: UUID, value: String) {
                 Log.d(TAG, "DIS INFO uuid: $uuid value: $value")
+                connectionStatus.onNext(ConnectionStatus.DISCONNECTING)
 
             }
 
@@ -115,7 +132,7 @@ class DefaultPolarConnection  @Inject constructor(
         })
     }
 
-    override fun connect () {
+    override fun connect() {
         try {
             if (deviceConnected) {
                 api.disconnectFromDevice(DEVICE_ID)
@@ -133,10 +150,10 @@ class DefaultPolarConnection  @Inject constructor(
     }
 
     override fun getHr(): Flowable<PolarHrData> {
-            return api.startHrStreaming(DEVICE_ID)
+        return api.startHrStreaming(DEVICE_ID)
     }
 
-    override fun getEcg (settings: PolarSensorSetting): Flowable<PolarEcgData> {
+    override fun getEcg(settings: PolarSensorSetting): Flowable<PolarEcgData> {
         return api.startEcgStreaming(DEVICE_ID, settings)
     }
 
@@ -144,16 +161,17 @@ class DefaultPolarConnection  @Inject constructor(
         return api.startAccStreaming(DEVICE_ID, settings)
     }
 
-//todo
-override fun onResume() {
+    override fun onResume() {
 
-    api.foregroundEntered()
-}
+        api.foregroundEntered()
+    }
 
-//todo
-override fun onDestroy() {
+    override fun onDestroy() {
 
-    api.shutDown()
-}
+        api.shutDown()
+    }
 
+    override fun subscribeConnectionStatus(onNext: Consumer<ConnectionStatus>, onError: Consumer<Throwable>, onComplete: Action): Disposable {
+        return connectionStatus.subscribe(onNext, onError, onComplete)
+    }
 }

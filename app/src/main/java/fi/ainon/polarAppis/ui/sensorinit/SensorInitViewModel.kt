@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2022 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package fi.ainon.polarAppis.ui.sensorinit
 
 import android.content.Context
@@ -30,9 +14,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import fi.ainon.polarAppis.communication.polar.PolarConnection
 import fi.ainon.polarAppis.data.DataItemTypeRepository
-import fi.ainon.polarAppis.ui.sensorinit.DataItemTypeUiState.Error
-import fi.ainon.polarAppis.ui.sensorinit.DataItemTypeUiState.Loading
-import fi.ainon.polarAppis.ui.sensorinit.DataItemTypeUiState.Success
+import fi.ainon.polarAppis.ui.sensorinit.SensorInitUiState.Error
+import fi.ainon.polarAppis.ui.sensorinit.SensorInitUiState.Loading
+import fi.ainon.polarAppis.ui.sensorinit.SensorInitUiState.Success
 import fi.ainon.polarAppis.worker.SensorDataWorker
 import fi.ainon.polarAppis.worker.dataObject.DataType
 import kotlinx.coroutines.flow.SharingStarted
@@ -52,8 +36,8 @@ class DataItemTypeViewModel @Inject constructor(
 
     val SENSORTAG = "polarSensorDataWorker"
 
-    val uiState: StateFlow<DataItemTypeUiState> = dataItemTypeRepository
-        .dataItemTypes.map<List<String>, DataItemTypeUiState>(::Success)
+    val uiState: StateFlow<SensorInitUiState> = dataItemTypeRepository
+        .dataItemTypes.map<List<String>, SensorInitUiState>(::Success)
         .catch { emit(Error(it)) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Loading)
 
@@ -133,8 +117,8 @@ class DataItemTypeViewModel @Inject constructor(
 
 }
 
-sealed interface DataItemTypeUiState {
-    object Loading : DataItemTypeUiState
-    data class Error(val throwable: Throwable) : DataItemTypeUiState
-    data class Success(val data: List<String>) : DataItemTypeUiState
+sealed interface SensorInitUiState {
+    object Loading : SensorInitUiState
+    data class Error(val throwable: Throwable) : SensorInitUiState
+    data class Success(val data: List<String>) : SensorInitUiState
 }

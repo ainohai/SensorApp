@@ -8,10 +8,15 @@ import androidx.work.ListenableWorker
 import androidx.work.WorkerParameters
 import com.polar.sdk.api.model.PolarSensorSetting
 import fi.ainon.polarAppis.communication.polar.PolarConnection
+import fi.ainon.polarAppis.dataHandling.DataHandler
+import fi.ainon.polarAppis.worker.dataObject.ConnectionStatus
 import fi.ainon.polarAppis.worker.dataObject.DataType
 import fi.ainon.polarAppis.worker.sensorDataCollector.CollectAcc
 import fi.ainon.polarAppis.worker.sensorDataCollector.CollectEcg
 import fi.ainon.polarAppis.worker.sensorDataCollector.CollectHr
+import io.reactivex.rxjava3.disposables.Disposable
+import io.reactivex.rxjava3.functions.Action
+import io.reactivex.rxjava3.functions.Consumer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -28,10 +33,18 @@ class SensorDataWorker(
     private var acc : CollectAcc? = null;
     private var hr : CollectHr? = null;
 
+    //todo:
+    private var onNext: Consumer<ConnectionStatus> = Consumer { value -> println("Got status: $value") }
+    private var onError: Consumer<Throwable> = Consumer { error -> println("Got err: $error") }
+    private var onComplete = Action { println("Complete") }
+    private var connectionStatusDisposable: Disposable? = null
+
 
     @SuppressLint("CheckResult")
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
+
+            connectionStatusDisposable = polarConnection.subscribeConnectionStatus(onNext, onError, onComplete)
 
             val settings = createSettings()
             if (isActivated(DataType.ECG)) {
@@ -68,6 +81,7 @@ class SensorDataWorker(
         ecg?.stopCollect()
         acc?.stopCollect()
         hr?.stopCollect()
+        connectionStatusDisposable?.dispose()
     }
 
     private fun isActivated(dataType: DataType): Boolean {

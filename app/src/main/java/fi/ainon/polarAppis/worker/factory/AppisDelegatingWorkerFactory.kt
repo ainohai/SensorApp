@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.work.DelegatingWorkerFactory
 import dagger.hilt.android.qualifiers.ApplicationContext
 import fi.ainon.polarAppis.communication.polar.PolarConnection
-import fi.ainon.polarAppis.worker.DataHandler
+import fi.ainon.polarAppis.dataHandling.DataHandler
 import javax.inject.Inject
 import javax.inject.Singleton
 

@@ -24,7 +24,7 @@ import org.junit.Rule
 import org.junit.runner.RunWith
 
 /**
- * UI tests for [DataItemTypeScreen].
+ * UI tests for [SensorInitScreen].
  */
 @RunWith(AndroidJUnit4::class)
 class DataItemTypeScreenTest {

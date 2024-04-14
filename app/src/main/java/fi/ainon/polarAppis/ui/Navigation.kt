@@ -23,14 +23,14 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import fi.ainon.polarAppis.ui.sensorinit.DataItemTypeScreen
+import fi.ainon.polarAppis.ui.sensorinit.SensorInitScreen
 
 @Composable
 fun MainNavigation() {
     val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = "main") {
-        composable("main") { DataItemTypeScreen(modifier = Modifier.padding(16.dp)) }
+        composable("main") { SensorInitScreen(modifier = Modifier.padding(16.dp)) }
         // TODO: Add more destinations
     }
 }

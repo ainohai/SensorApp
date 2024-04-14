@@ -36,13 +36,13 @@ class DataItemTypeViewModelTest {
     @Test
     fun uiState_initiallyLoading() = runTest {
         val viewModel = DataItemTypeViewModel(FakeDataItemTypeRepository())
-        assertEquals(viewModel.uiState.first(), DataItemTypeUiState.Loading)
+        assertEquals(viewModel.uiState.first(), SensorInitUiState.Loading)
     }
 
     @Test
     fun uiState_onItemSaved_isDisplayed() = runTest {
         val viewModel = DataItemTypeViewModel(FakeDataItemTypeRepository())
-        assertEquals(viewModel.uiState.first(), DataItemTypeUiState.Loading)
+        assertEquals(viewModel.uiState.first(), SensorInitUiState.Loading)
     }
 }
 

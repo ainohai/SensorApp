@@ -1,22 +1,5 @@
-/*
- * Copyright (C) 2022 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package fi.ainon.polarAppis.ui.sensorinit
 
-import fi.ainon.polarAppis.ui.theme.MyApplicationTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,31 +17,28 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import fi.ainon.polarAppis.ui.theme.MyApplicationTheme
 
 
 @Composable
-fun DataItemTypeScreen(modifier: Modifier = Modifier, viewModel: DataItemTypeViewModel = hiltViewModel()) {
+fun SensorInitScreen(modifier: Modifier = Modifier, viewModel: DataItemTypeViewModel = hiltViewModel()) {
     val items by viewModel.uiState.collectAsStateWithLifecycle()
-    if (items is DataItemTypeUiState.Success) {
-        DataItemTypeScreen(
+    if (items is SensorInitUiState.Success) {
+        SensorInitScreen(
             pingMe = viewModel::pingMe,
             connect = viewModel::connect,
-            hr = viewModel::hr,
-            ecg = viewModel::h10Setup,
-            acc = viewModel::acc,
+            collect = viewModel::h10Setup,
             modifier = modifier
         )
     }
 }
 
 @Composable
-internal fun DataItemTypeScreen(
+internal fun SensorInitScreen(
 
     pingMe: () -> Boolean,
     connect: () -> Unit,
-    hr: () -> Unit,
-    ecg: () -> Unit,
-    acc: () -> Unit,
+    collect: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier.verticalScroll(rememberScrollState())) {
@@ -89,30 +69,8 @@ internal fun DataItemTypeScreen(
                 .padding(bottom = 24.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Button(modifier = Modifier.width(196.dp), onClick = { hr() }) {
-                Text("HR")
-            }
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 24.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Button(modifier = Modifier.width(196.dp), onClick = { ecg() }) {
-                Text("ECG")
-            }
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 24.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Button(modifier = Modifier.width(196.dp), onClick = {
-                acc()
-            }) {
-                Text("ACC")
+            Button(modifier = Modifier.width(196.dp), onClick = { collect() }) {
+                Text("Collect")
             }
         }
     }
@@ -125,12 +83,10 @@ internal fun DataItemTypeScreen(
 @Composable
 private fun DefaultPreview() {
     MyApplicationTheme {
-        DataItemTypeScreen(
+        SensorInitScreen(
             pingMe =  {false},
             connect = {},
-            hr = {},
-            ecg = {},
-            acc = {},
+            collect = {},
         )
     }
 }
@@ -142,12 +98,10 @@ private fun DefaultPreview() {
 @Composable
 private fun PortraitPreview() {
     MyApplicationTheme {
-        DataItemTypeScreen(
+        SensorInitScreen(
             pingMe = {false},
             connect = {},
-            hr = {},
-            ecg = {},
-            acc = {}
+            collect = {},
         )
     }
 }

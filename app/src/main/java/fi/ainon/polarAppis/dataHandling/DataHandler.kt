@@ -1,4 +1,4 @@
-package fi.ainon.polarAppis.worker
+package fi.ainon.polarAppis.dataHandling
 
 import dagger.Binds
 import dagger.Module

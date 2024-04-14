@@ -4,7 +4,7 @@ import android.util.Log
 import com.polar.sdk.api.model.PolarHrData
 import com.polar.sdk.api.model.PolarSensorSetting
 import fi.ainon.polarAppis.communication.polar.PolarConnection
-import fi.ainon.polarAppis.worker.DataHandler
+import fi.ainon.polarAppis.dataHandling.DataHandler
 import fi.ainon.polarAppis.worker.dataObject.HrData
 
 

@@ -5,7 +5,7 @@ import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import fi.ainon.polarAppis.communication.polar.PolarConnection
-import fi.ainon.polarAppis.worker.DataHandler
+import fi.ainon.polarAppis.dataHandling.DataHandler
 import fi.ainon.polarAppis.worker.SensorDataWorker
 
 class SensorWorkerFactory (
