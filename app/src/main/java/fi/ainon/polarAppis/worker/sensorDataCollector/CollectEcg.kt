@@ -16,6 +16,9 @@ class CollectEcg(
 
     private val TAG = "CollectEcg: "
 
+    init {
+        collectData()
+    }
     override fun streamData(polarSettings: PolarSensorSetting) {
          val ecgDisposable = polarConnection.getEcg(polarSettings).subscribe(
             { polarEcgData: PolarEcgData ->

@@ -1,10 +1,12 @@
 package fi.ainon.polarAppis.worker.dataObject
 
+import java.io.Serializable
+
 
 @kotlinx.serialization.Serializable
 data class AccData(
     val samples: List<AccDataSample>,
-) {
+): Serializable {
 
     /**
      * Polar accelerometer data sample
@@ -19,5 +21,5 @@ data class AccData(
         val x: Int,
         val y: Int,
         val z: Int
-    )
+    ): Serializable
 }

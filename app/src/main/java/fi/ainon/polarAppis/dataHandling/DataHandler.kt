@@ -37,28 +37,29 @@ class DefaultDataHandler  @Inject constructor(
 
     override fun handleECG(data: EcgData) {
 
-        val byteData = makeByteArr(data)
+        //Todo: Function for this and remove duplicates
+        val jsonString = Json.encodeToString(data)
+        val byteData = jsonString.toByteArray(Charsets.UTF_16)
         serverDataConnection.addData(byteData, DataType.ECG)
 
         //Todo: Other handling
     }
 
     override fun handleAcc(data: AccData) {
-        serverDataConnection.addData(makeByteArr(data), DataType.ACC)
+
+        val jsonString = Json.encodeToString(data)
+        val byteData = jsonString.toByteArray(Charsets.UTF_16)
+        serverDataConnection.addData(byteData, DataType.ACC)
 
         //Todo: Other handling
     }
 
     override fun handleHr(data: HrData) {
-        serverDataConnection.addData(makeByteArr(data), DataType.HR)
+        val jsonString = Json.encodeToString(data)
+        val byteData = jsonString.toByteArray(Charsets.UTF_16)
+        serverDataConnection.addData(byteData, DataType.HR)
 
         // Todo: Other handling
     }
-
-    private fun makeByteArr(data: Any): ByteArray {
-        val jsonString = Json.encodeToString(data)
-        return jsonString.toByteArray(Charsets.UTF_16)
-    }
-
 
 }

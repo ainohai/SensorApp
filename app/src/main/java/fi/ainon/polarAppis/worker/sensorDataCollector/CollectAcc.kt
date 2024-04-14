@@ -16,6 +16,9 @@ class CollectAcc(
 
     private val TAG = "CollectAcc: "
 
+    init {
+        collectData()
+    }
     override fun streamData(polarSettings: PolarSensorSetting) {
 
         val accDisposable = polarConnection.getAcc(polarSettings)

@@ -52,6 +52,9 @@ interface PolarConnection {
         onError: Consumer<Throwable>,
         onComplete: Action
     ): Disposable
+
+    //TODO: What if device is turned of?
+    fun isConnected(): Boolean
 }
 
 
@@ -108,7 +111,7 @@ class DefaultPolarConnection @Inject constructor(
 
             override fun deviceConnecting(polarDeviceInfo: PolarDeviceInfo) {
                 Log.d(TAG, "CONNECTING: ${polarDeviceInfo.deviceId}")
-                connectionStatus.onNext(ConnectionStatus.CONNECTED)
+                connectionStatus.onNext(ConnectionStatus.CONNECTING)
 
             }
 
@@ -132,11 +135,17 @@ class DefaultPolarConnection @Inject constructor(
         })
     }
 
+    override fun isConnected(): Boolean {
+        Log.d(TAG, "Device is connected.")
+        return deviceConnected
+    }
     override fun connect() {
         try {
             if (deviceConnected) {
+                Log.d(TAG, "Disconnecting device")
                 api.disconnectFromDevice(DEVICE_ID)
             } else {
+                Log.d(TAG, "Asking to connect device")
                 api.connectToDevice(DEVICE_ID)
             }
         } catch (polarInvalidArgument: PolarInvalidArgument) {

@@ -1,10 +1,12 @@
 package fi.ainon.polarAppis.worker.dataObject
 
+import java.io.Serializable
+
 
 @kotlinx.serialization.Serializable
 data class HrData(
     val samples: List<HrSample>
-) {
+) : Serializable {
     /**
      * Polar heart rate sample
      * @property hr value is heart rate in BPM (beats per minute).
@@ -20,5 +22,5 @@ data class HrData(
         val rrAvailable: Boolean,
         val contactStatus: Boolean,
         val contactStatusSupported: Boolean,
-    )
+    ) : Serializable
 }

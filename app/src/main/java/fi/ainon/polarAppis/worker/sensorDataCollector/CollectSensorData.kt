@@ -12,10 +12,6 @@ interface CollectSensorData {
 abstract class CommonCollect (private val polarSettings: PolarSensorSetting): CollectSensorData {
     private var disposable: Disposable? = null;
 
-    init {
-        collectData()
-    }
-
     override fun collectData() {
         streamData(polarSettings)
     }

@@ -4,10 +4,11 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.Data
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequest
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
-import androidx.work.WorkRequest
 import androidx.work.workDataOf
 import com.polar.sdk.api.model.PolarSensorSetting
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -51,9 +52,6 @@ class DataItemTypeViewModel @Inject constructor(
         polarConnection.connect()
     }
 
-    fun hr() {
-        polarConnection.getHr()
-    }
 
     fun h10Setup() {
 
@@ -81,13 +79,13 @@ class DataItemTypeViewModel @Inject constructor(
     }
 
     private fun createWorkRequest(workManager: WorkManager) {
-        val sensorWorkRequest: WorkRequest =
+        val sensorWorkRequest: OneTimeWorkRequest =
             OneTimeWorkRequestBuilder<SensorDataWorker>()
                 .setInputData(getH10SettingsWorkData())
                 .addTag(SENSORTAG)
                 .build()
 
-        workManager.enqueue(sensorWorkRequest)
+        workManager.enqueueUniqueWork(SENSORTAG, ExistingWorkPolicy.REPLACE, sensorWorkRequest)
     }
 
     fun acc() {
@@ -109,6 +107,7 @@ class DataItemTypeViewModel @Inject constructor(
         return workDataOf(
             PolarSensorSetting.SettingType.SAMPLE_RATE.name to "130",
             PolarSensorSetting.SettingType.RESOLUTION.name to "14",
+            PolarSensorSetting.SettingType.RANGE.name to "2",
             DataType.HR.name to "true",
             DataType.ECG.name to "true",
             DataType.ACC.name to "true")

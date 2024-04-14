@@ -16,6 +16,10 @@ class CollectHr(
 
     private val TAG = "CollectHr: "
 
+    init {
+        collectData()
+    }
+
     override fun streamData(polarSettings: PolarSensorSetting) {
          val hrDisposable = polarConnection.getHr().subscribe(
             { polarHrData: PolarHrData ->
