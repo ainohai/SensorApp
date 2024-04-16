@@ -19,3 +19,4 @@ app/src/main/java/fi/ainon/polarAppis/communication/polar/PolarConnectionOrig.kt
 /app/schemas/fi.ainon.polarAppis.data.local.database.AppDatabase/1.json
 /app/src/main/java/fi/ainon/polarAppis/data/local/database/AppDatabase.kt
 /app/src/main/java/fi/ainon/polarAppis/data/
+/app/src/test/
