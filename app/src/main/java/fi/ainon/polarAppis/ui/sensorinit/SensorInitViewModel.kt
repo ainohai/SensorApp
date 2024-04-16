@@ -1,6 +1,7 @@
 package fi.ainon.polarAppis.ui.sensorinit
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.Data
@@ -14,34 +15,49 @@ import com.polar.sdk.api.model.PolarSensorSetting
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import fi.ainon.polarAppis.communication.polar.PolarConnection
-import fi.ainon.polarAppis.data.DataItemTypeRepository
+import fi.ainon.polarAppis.data.PolarDataRepository
 import fi.ainon.polarAppis.ui.sensorinit.SensorInitUiState.Error
 import fi.ainon.polarAppis.ui.sensorinit.SensorInitUiState.Loading
 import fi.ainon.polarAppis.ui.sensorinit.SensorInitUiState.Success
 import fi.ainon.polarAppis.worker.SensorDataWorker
+import fi.ainon.polarAppis.worker.dataObject.ConnectionStatus
 import fi.ainon.polarAppis.worker.dataObject.DataSetting
 import fi.ainon.polarAppis.worker.dataObject.DataType
+import io.reactivex.rxjava3.disposables.Disposable
+import io.reactivex.rxjava3.functions.Action
+import io.reactivex.rxjava3.functions.Consumer
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import java.util.EnumMap
 import javax.inject.Inject
 
 @HiltViewModel
 class DataItemTypeViewModel @Inject constructor(
     @ApplicationContext private val appContext: Context,
-    private val dataItemTypeRepository: DataItemTypeRepository,
+    private val polarDataRepository: PolarDataRepository,
     private val polarConnection: PolarConnection,
 ) : ViewModel() {
 
     val SENSORTAG = "polarSensorDataWorker"
-
-    val uiState: StateFlow<SensorInitUiState> = dataItemTypeRepository
-        .dataItemTypes.map<List<String>, SensorInitUiState>(::Success)
+    val TAG = "SensorInitViewModel: "
+    val uiState: StateFlow<SensorInitUiState> = polarDataRepository
+        .connection.map<Boolean, SensorInitUiState>(::Success)
         .catch { emit(Error(it)) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Loading)
+
+    //Todo: move all this.
+    private var onNext: Consumer<ConnectionStatus> = Consumer { connection -> upsertConnection(connection)}
+    private var onError: Consumer<Throwable> = Consumer { error -> throw IllegalStateException("Error with ConnectionStatus", error) }
+    private var onComplete = Action { Log.e(TAG, "Connection status listening completed") }
+    private var connectionStatusDisposable: Disposable? = null
+    init {
+        //Todo: This one not disposed.
+        connectionStatusDisposable = polarConnection.subscribeConnectionStatus(onNext, onError, onComplete)
+    }
 
 
     fun pingMe(): Boolean {
@@ -119,10 +135,23 @@ class DataItemTypeViewModel @Inject constructor(
 
     }
 
+    private fun upsertConnection (connectionStatus: ConnectionStatus) {
+
+        if (ConnectionStatus.CONNECTED == connectionStatus || ConnectionStatus.DISCONNECTED == connectionStatus) {
+
+            val isConnected = ConnectionStatus.CONNECTED == connectionStatus
+
+            val job = viewModelScope.launch {
+                polarDataRepository.isConnected(isConnected)
+                println("Coroutine is running")
+            }
+        }
+    }
+
 }
 
 sealed interface SensorInitUiState {
     object Loading : SensorInitUiState
     data class Error(val throwable: Throwable) : SensorInitUiState
-    data class Success(val data: List<String>) : SensorInitUiState
+    data class Success(val connected: Boolean) : SensorInitUiState
 }

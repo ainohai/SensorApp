@@ -22,15 +22,16 @@ import fi.ainon.polarAppis.ui.theme.MyApplicationTheme
 
 @Composable
 fun SensorInitScreen(modifier: Modifier = Modifier, viewModel: DataItemTypeViewModel = hiltViewModel()) {
-    val items by viewModel.uiState.collectAsStateWithLifecycle()
-    if (items is SensorInitUiState.Success) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    //if (state is SensorInitUiState.Success) {
         SensorInitScreen(
             pingMe = viewModel::pingMe,
             connect = viewModel::connect,
             collect = viewModel::h10Setup,
-            modifier = modifier
+            modifier = modifier,
+            state = state
         )
-    }
+    //}
 }
 
 @Composable
@@ -39,8 +40,15 @@ internal fun SensorInitScreen(
     pingMe: () -> Boolean,
     connect: () -> Unit,
     collect: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    state: SensorInitUiState
 ) {
+    val connected = when (state) {
+        SensorInitUiState.Loading -> 0
+        is SensorInitUiState.Success -> state.connected
+        else -> {false}
+    }
+
     Column(modifier.verticalScroll(rememberScrollState())) {
 
         Row(
@@ -73,6 +81,16 @@ internal fun SensorInitScreen(
                 Text("Collect")
             }
         }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 24.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text("Connected: ")
+            Text(connected.toString())
+        }
+
     }
 }
 
@@ -87,6 +105,9 @@ private fun DefaultPreview() {
             pingMe =  {false},
             connect = {},
             collect = {},
+            state = SensorInitUiState.Success(
+                connected = true,
+            ),
         )
     }
 }
@@ -102,6 +123,9 @@ private fun PortraitPreview() {
             pingMe = {false},
             connect = {},
             collect = {},
+            state = SensorInitUiState.Success(
+                connected = false,
+            ),
         )
     }
 }
