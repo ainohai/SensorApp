@@ -19,6 +19,7 @@ import fi.ainon.polarAppis.ui.sensorinit.SensorInitUiState.Error
 import fi.ainon.polarAppis.ui.sensorinit.SensorInitUiState.Loading
 import fi.ainon.polarAppis.ui.sensorinit.SensorInitUiState.Success
 import fi.ainon.polarAppis.worker.SensorDataWorker
+import fi.ainon.polarAppis.worker.dataObject.DataSetting
 import fi.ainon.polarAppis.worker.dataObject.DataType
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -104,10 +105,14 @@ class DataItemTypeViewModel @Inject constructor(
 
     private fun getH10SettingsWorkData(): Data {
 
+        //TODO: parametrize
         return workDataOf(
-            PolarSensorSetting.SettingType.SAMPLE_RATE.name to "130",
-            PolarSensorSetting.SettingType.RESOLUTION.name to "14",
-            PolarSensorSetting.SettingType.RANGE.name to "2",
+            DataSetting.ECG_SAMPLE_RATE.name to "130",
+            DataSetting.ECG_RESOLUTION.name to "14",
+            DataSetting.ECG_RANGE.name to "2",
+            DataSetting.ACC_SAMPLE_RATE.name to "25",
+            DataSetting.ACC_RESOLUTION.name to "16",
+            DataSetting.ACC_RANGE.name to "2",
             DataType.HR.name to "true",
             DataType.ECG.name to "true",
             DataType.ACC.name to "true")

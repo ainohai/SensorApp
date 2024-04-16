@@ -68,7 +68,6 @@ class DefaultPolarConnection @Inject constructor(
 
     private var deviceConnected = false
 
-    //TODO
     private var connectionStatus = PublishSubject.create<ConnectionStatus>()
 
     private val api: PolarBleApi by lazy {

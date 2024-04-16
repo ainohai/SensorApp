@@ -10,6 +10,7 @@ import com.polar.sdk.api.model.PolarSensorSetting
 import fi.ainon.polarAppis.communication.polar.PolarConnection
 import fi.ainon.polarAppis.dataHandling.DataHandler
 import fi.ainon.polarAppis.worker.dataObject.ConnectionStatus
+import fi.ainon.polarAppis.worker.dataObject.DataSetting
 import fi.ainon.polarAppis.worker.dataObject.DataType
 import fi.ainon.polarAppis.worker.sensorDataCollector.CollectAcc
 import fi.ainon.polarAppis.worker.sensorDataCollector.CollectEcg
@@ -94,7 +95,7 @@ class SensorDataWorker(
     private fun reactConnectionChanges(connectionStatus: ConnectionStatus) {
         Log.d(TAG, "Reacting to connection status change $connectionStatus")
         if (ConnectionStatus.CONNECTED == connectionStatus) {
-            sleep(1000) //Ensure everything is setup
+            sleep(1000) //Ensure everything is set up
             collectData()
         }
         else if (ConnectionStatus.DISCONNECTED == connectionStatus) {
@@ -104,15 +105,15 @@ class SensorDataWorker(
 
     private fun collectData() {
         Log.d(TAG, "Starting to collect data")
-        val settings = createSettings()
+
         if (isActivated(DataType.ECG)) {
-            ecg = CollectEcg(dataHandler, polarConnection, settings)
+            ecg = CollectEcg(dataHandler, polarConnection, createEcgSettings())
         }
         if (isActivated(DataType.ACC)) {
-            acc = CollectAcc(dataHandler, polarConnection, settings)
+            acc = CollectAcc(dataHandler, polarConnection, createAccSettings())
         }
         if (isActivated(DataType.HR)) {
-            hr = CollectHr(dataHandler, polarConnection, settings)
+            hr = CollectHr(dataHandler, polarConnection, createEcgSettings())
         }
     }
 
@@ -120,23 +121,42 @@ class SensorDataWorker(
         return inputData.getString(dataType.name).toBoolean()
     }
 
-    fun createSettings(): PolarSensorSetting {
-        val resolution =
-            inputData.getString(PolarSensorSetting.SettingType.RESOLUTION.name) ?: ListenableWorker.Result.failure()
-        val sampleRate =
-            inputData.getString(PolarSensorSetting.SettingType.SAMPLE_RATE.name) ?: ListenableWorker.Result.failure()
-        val range =
-            inputData.getString(PolarSensorSetting.SettingType.RANGE.name) ?: ListenableWorker.Result.failure()
-
+    fun createEcgSettings(): PolarSensorSetting {
+        val ecgResolution =
+            inputData.getString(DataSetting.ECG_RESOLUTION.name) ?: ListenableWorker.Result.failure()
+        val ecgSampleRate =
+            inputData.getString(DataSetting.ECG_SAMPLE_RATE.name) ?: ListenableWorker.Result.failure()
+        val ecgRange =
+            inputData.getString(DataSetting.ECG_RANGE.name) ?: ListenableWorker.Result.failure()
 
         val polarSettings = PolarSensorSetting(
             mapOf(
-                Pair(PolarSensorSetting.SettingType.SAMPLE_RATE, (sampleRate as String).toInt()),
-                Pair(PolarSensorSetting.SettingType.RESOLUTION, (resolution as String).toInt()),
-                Pair(PolarSensorSetting.SettingType.RANGE, (range as String).toInt()),
+                Pair(PolarSensorSetting.SettingType.SAMPLE_RATE, (ecgSampleRate as String).toInt()),
+                Pair(PolarSensorSetting.SettingType.RESOLUTION, (ecgResolution as String).toInt()),
+                Pair(PolarSensorSetting.SettingType.RANGE, (ecgRange as String).toInt()),
             )
         )
         return polarSettings
     }
+
+    fun createAccSettings(): PolarSensorSetting {
+
+        val accResolution =
+            inputData.getString(DataSetting.ACC_RESOLUTION.name) ?: ListenableWorker.Result.failure()
+        val accSampleRate =
+            inputData.getString(DataSetting.ACC_SAMPLE_RATE.name) ?: ListenableWorker.Result.failure()
+        val accRange =
+            inputData.getString(DataSetting.ACC_RANGE.name) ?: ListenableWorker.Result.failure()
+
+        val polarSettings = PolarSensorSetting(
+            mapOf(
+                Pair(PolarSensorSetting.SettingType.SAMPLE_RATE, (accSampleRate as String).toInt()),
+                Pair(PolarSensorSetting.SettingType.RESOLUTION, (accResolution as String).toInt()),
+                Pair(PolarSensorSetting.SettingType.RANGE, (accRange as String).toInt()),
+            )
+        )
+        return polarSettings
+    }
+
 
 }
