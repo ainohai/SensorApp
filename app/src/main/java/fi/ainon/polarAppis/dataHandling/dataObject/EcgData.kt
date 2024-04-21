@@ -1,4 +1,4 @@
-package fi.ainon.polarAppis.worker.dataObject
+package fi.ainon.polarAppis.dataHandling.dataObject
 
 import java.io.Serializable
 

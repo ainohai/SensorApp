@@ -124,6 +124,13 @@ dependencies {
     implementation("io.reactivex.rxjava3:rxandroid:3.0.2")
 
     implementation("com.squareup.retrofit2:converter-kotlinx-serialization:2.11.0")
+    implementation(libs.kotlinx.rx3java)
+
+    // Chart library
+    implementation(libs.vico.compose)
+    implementation(libs.vico.compose.m3)
+    implementation(libs.vico.core)
+    //implementation(libs.ycharts)
 
 
     // Workers

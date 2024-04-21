@@ -1,4 +1,4 @@
-package fi.ainon.polarAppis.worker.dataObject
+package fi.ainon.polarAppis.dataHandling.dataObject
 
 enum class DataType {
     HR,
@@ -12,5 +12,10 @@ enum class DataSetting {
     ECG_RESOLUTION,
     ACC_RANGE,
     ACC_SAMPLE_RATE,
-    ACC_RESOLUTION
+    ACC_RESOLUTION,
+    COLLECTION_TIME_IN_S
+}
+
+enum class ConnectionSetting {
+    SHOULD_BE_CONNECTED
 }

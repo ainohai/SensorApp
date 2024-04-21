@@ -1,11 +1,11 @@
-package fi.ainon.polarAppis.worker.sensorDataCollector
+package fi.ainon.polarAppis.dataHandling.sensorDataCollector
 
 import android.util.Log
 import com.polar.sdk.api.model.PolarEcgData
 import com.polar.sdk.api.model.PolarSensorSetting
 import fi.ainon.polarAppis.communication.polar.PolarConnection
 import fi.ainon.polarAppis.dataHandling.DataHandler
-import fi.ainon.polarAppis.worker.dataObject.EcgData
+import fi.ainon.polarAppis.dataHandling.dataObject.EcgData
 
 
 class CollectEcg(

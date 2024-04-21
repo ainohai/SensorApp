@@ -11,50 +11,33 @@ import com.polar.sdk.api.model.PolarDeviceInfo
 import com.polar.sdk.api.model.PolarEcgData
 import com.polar.sdk.api.model.PolarHrData
 import com.polar.sdk.api.model.PolarSensorSetting
-import dagger.Binds
-import dagger.Module
-import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
 import fi.ainon.polarAppis.BuildConfig
-import fi.ainon.polarAppis.worker.dataObject.ConnectionStatus
+import fi.ainon.polarAppis.dataHandling.dataObject.ConnectionStatus
 import io.reactivex.rxjava3.core.Flowable
-import io.reactivex.rxjava3.disposables.Disposable
-import io.reactivex.rxjava3.functions.Action
-import io.reactivex.rxjava3.functions.Consumer
-import io.reactivex.rxjava3.subjects.PublishSubject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
-import javax.inject.Singleton
-
-@Module
-@InstallIn(SingletonComponent::class)
-interface PolarConnModule {
-
-    @Singleton
-    @Binds
-    fun bindsPolarConn(
-        polarConnection: DefaultPolarConnection
-    ): PolarConnection
-}
 
 interface PolarConnection {
 
-    fun connect()
     fun getHr(): Flowable<PolarHrData>
     fun getEcg(settings: PolarSensorSetting): Flowable<PolarEcgData>
     fun getAcc(settings: PolarSensorSetting): Flowable<PolarAccelerometerData>
 
     fun onResume()
     fun onDestroy()
-    fun subscribeConnectionStatus(
-        onNext: Consumer<ConnectionStatus>,
-        onError: Consumer<Throwable>,
-        onComplete: Action
-    ): Disposable
-
-    //TODO: What if device is turned of?
+    fun connectionStatus(): SharedFlow<ConnectionStatus>
     fun isConnected(): Boolean
+    fun toggleConnect()
+    fun connect(shouldBeConnected: Boolean)
+
 }
 
 
@@ -66,9 +49,10 @@ class DefaultPolarConnection @Inject constructor(
     private val API_LOGGER_TAG: String = "POLAR API kutsu: "
     private val TAG = "PolarConnection: "
 
-    private var deviceConnected = false
+    private var deviceConnectionStatus = ConnectionStatus.DISCONNECTED
 
-    private var connectionStatus = PublishSubject.create<ConnectionStatus>()
+    private var _connectionStatus = MutableSharedFlow<ConnectionStatus>(replay = 1)
+    private var connectionStatus = _connectionStatus.asSharedFlow()
 
     private val api: PolarBleApi by lazy {
         // Notice all features are enabled
@@ -94,6 +78,7 @@ class DefaultPolarConnection @Inject constructor(
     private fun apiSetup() {
         api.setApiLogger { s: String -> Log.d(API_LOGGER_TAG, s) }
 
+        //Todo: can you use callback flow here?
         api.setApiCallback(object : PolarBleApiCallback() {
             override fun blePowerStateChanged(powered: Boolean) {
                 Log.d(TAG, "BLE power: $powered")
@@ -103,27 +88,24 @@ class DefaultPolarConnection @Inject constructor(
             override fun deviceConnected(polarDeviceInfo: PolarDeviceInfo) {
                 Log.d(TAG, "CONNECTED: ${polarDeviceInfo.deviceId}")
                 DEVICE_ID = polarDeviceInfo.deviceId
-                deviceConnected = true
-                connectionStatus.onNext(ConnectionStatus.CONNECTED)
+                nextStatus(ConnectionStatus.CONNECTED)
 
             }
 
             override fun deviceConnecting(polarDeviceInfo: PolarDeviceInfo) {
                 Log.d(TAG, "CONNECTING: ${polarDeviceInfo.deviceId}")
-                connectionStatus.onNext(ConnectionStatus.CONNECTING)
+                nextStatus(ConnectionStatus.CONNECTING)
 
             }
 
             override fun deviceDisconnected(polarDeviceInfo: PolarDeviceInfo) {
                 Log.d(TAG, "DISCONNECTED: ${polarDeviceInfo.deviceId}")
-                deviceConnected = false
-                connectionStatus.onNext(ConnectionStatus.DISCONNECTED)
+                nextStatus(ConnectionStatus.DISCONNECTED)
 
             }
 
             override fun disInformationReceived(identifier: String, uuid: UUID, value: String) {
                 Log.d(TAG, "DIS INFO uuid: $uuid value: $value")
-                connectionStatus.onNext(ConnectionStatus.DISCONNECTING)
 
             }
 
@@ -135,12 +117,14 @@ class DefaultPolarConnection @Inject constructor(
     }
 
     override fun isConnected(): Boolean {
-        Log.d(TAG, "Device is connected.")
-        return deviceConnected
+        Log.d(TAG, "Device is connected ${deviceConnectionStatus === ConnectionStatus.CONNECTED}.")
+        return deviceConnectionStatus == ConnectionStatus.CONNECTED
     }
-    override fun connect() {
+
+    //TODO: Refactor this
+    override fun toggleConnect() {
         try {
-            if (deviceConnected) {
+            if (deviceConnectionStatus == ConnectionStatus.CONNECTED) {
                 Log.d(TAG, "Disconnecting device")
                 api.disconnectFromDevice(DEVICE_ID)
             } else {
@@ -148,7 +132,26 @@ class DefaultPolarConnection @Inject constructor(
                 api.connectToDevice(DEVICE_ID)
             }
         } catch (polarInvalidArgument: PolarInvalidArgument) {
-            val attempt = if (deviceConnected) {
+            val attempt = if (deviceConnectionStatus == ConnectionStatus.CONNECTED) {
+                "disconnect"
+            } else {
+                "connect"
+            }
+            Log.e(TAG, "Failed to $attempt. Reason $polarInvalidArgument ")
+        }
+    }
+
+    override fun connect(shouldBeConnected: Boolean) {
+        try {
+            if (deviceConnectionStatus != ConnectionStatus.CONNECTED && shouldBeConnected) {
+                Log.d(TAG, "Asking to connect device")
+                api.connectToDevice(DEVICE_ID)
+            } else if (deviceConnectionStatus == ConnectionStatus.CONNECTED && !shouldBeConnected){
+                Log.d(TAG, "Disconnecting device")
+                api.disconnectFromDevice(DEVICE_ID)
+            }
+        } catch (polarInvalidArgument: PolarInvalidArgument) {
+            val attempt = if (deviceConnectionStatus == ConnectionStatus.CONNECTED) {
                 "disconnect"
             } else {
                 "connect"
@@ -172,6 +175,7 @@ class DefaultPolarConnection @Inject constructor(
     override fun onResume() {
 
         api.foregroundEntered()
+        nextStatus(deviceConnectionStatus)
     }
 
     override fun onDestroy() {
@@ -179,7 +183,22 @@ class DefaultPolarConnection @Inject constructor(
         api.shutDown()
     }
 
-    override fun subscribeConnectionStatus(onNext: Consumer<ConnectionStatus>, onError: Consumer<Throwable>, onComplete: Action): Disposable {
-        return connectionStatus.subscribe(onNext, onError, onComplete)
+    override fun connectionStatus(): SharedFlow<ConnectionStatus> {
+        return connectionStatus
+    }
+
+    private fun nextStatus(connectionStatus: ConnectionStatus) {
+        CoroutineScope(Dispatchers.Main).launch {
+            try {
+                // Small delay to ensure everything is set up.
+                if (connectionStatus == ConnectionStatus.CONNECTED) {
+                    delay(1*1000)
+                }
+                deviceConnectionStatus = connectionStatus
+                _connectionStatus.emit(connectionStatus)
+            } catch(e: Exception) {
+                Log.e(TAG, "Passing callback failed.", e)
+            }
+        }
     }
 }

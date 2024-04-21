@@ -9,19 +9,14 @@ import androidx.work.WorkerParameters
 import com.polar.sdk.api.model.PolarSensorSetting
 import fi.ainon.polarAppis.communication.polar.PolarConnection
 import fi.ainon.polarAppis.dataHandling.DataHandler
-import fi.ainon.polarAppis.worker.dataObject.ConnectionStatus
-import fi.ainon.polarAppis.worker.dataObject.DataSetting
-import fi.ainon.polarAppis.worker.dataObject.DataType
-import fi.ainon.polarAppis.worker.sensorDataCollector.CollectAcc
-import fi.ainon.polarAppis.worker.sensorDataCollector.CollectEcg
-import fi.ainon.polarAppis.worker.sensorDataCollector.CollectHr
-import io.reactivex.rxjava3.disposables.Disposable
-import io.reactivex.rxjava3.functions.Action
-import io.reactivex.rxjava3.functions.Consumer
+import fi.ainon.polarAppis.dataHandling.dataObject.DataSetting
+import fi.ainon.polarAppis.dataHandling.dataObject.DataType
+import fi.ainon.polarAppis.dataHandling.sensorDataCollector.CollectAcc
+import fi.ainon.polarAppis.dataHandling.sensorDataCollector.CollectEcg
+import fi.ainon.polarAppis.dataHandling.sensorDataCollector.CollectHr
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import java.lang.Thread.sleep
+import kotlinx.coroutines.withTimeoutOrNull
 
 class SensorDataWorker(
     context: Context,
@@ -30,16 +25,10 @@ class SensorDataWorker(
     private val dataHandler: DataHandler
 ) : CoroutineWorker(context, workerParams) {
 
-    private val TAG = "Sensor worker: "
+    private val TAG = "SensorWorker: "
     private var ecg : CollectEcg? = null;
     private var acc : CollectAcc? = null;
     private var hr : CollectHr? = null;
-
-
-    private var onNext: Consumer<ConnectionStatus> = Consumer { value -> reactConnectionChanges(value) }
-    private var onError: Consumer<Throwable> = Consumer { error -> throw IllegalStateException("Error with ConnectionStatus", error) }
-    private var onComplete = Action { Log.e(TAG, "Connection status listening completed") }
-    private var connectionStatusDisposable: Disposable? = null
 
 
     @SuppressLint("CheckResult")
@@ -47,32 +36,30 @@ class SensorDataWorker(
         try {
 
             Log.d(TAG, "Starting doWork in sensor worker")
-            if (!polarConnection.isConnected()) {
-                Log.d(TAG, "Worker triggering connect")
-                polarConnection.connect()
-                connectionStatusDisposable =
-                    polarConnection.subscribeConnectionStatus(onNext, onError, onComplete)
-            }
-            else {
-                Log.d(TAG, "Already connected, starting to collect data")
-                collectData()
+
+            val collectionTime =
+                inputData.getString(DataSetting.COLLECTION_TIME_IN_S.name)?.toLongOrNull() ?: 30
+
+            withTimeoutOrNull(collectionTime * 1000) {
+                dataHandler.isConnected().collect { isConnected ->
+                    Log.d(TAG, "Is connected: $isConnected")
+                    if (isConnected) {
+                        collectData()
+                        Log.d(TAG, "Already connected, starting to collect data")
+                    }
+                }
             }
 
-            //TODO: Parametrize + check neater ways.
-            // Worker is kept alive until we are not interested in subscription.
-            delay(60*1000)
             Log.d(TAG, "Timeout")
 
         } catch (ex: Exception) {
             Log.e(TAG, "Error when collecting sensor data", ex)
             cleanupCollectors()
-            cleanupConnection()
             Result.failure()
         }
         // Also when user stops the worker, finally is run.
         finally {
             cleanupCollectors()
-            cleanupConnection()
             Log.d(TAG, "End worker")
             Result.success()
         }
@@ -85,22 +72,6 @@ class SensorDataWorker(
         ecg?.stopCollect()
         acc?.stopCollect()
         hr?.stopCollect()
-    }
-
-    private fun cleanupConnection() {
-        Log.d(TAG, "Clean up connection")
-        connectionStatusDisposable?.dispose()
-    }
-
-    private fun reactConnectionChanges(connectionStatus: ConnectionStatus) {
-        Log.d(TAG, "Reacting to connection status change $connectionStatus")
-        if (ConnectionStatus.CONNECTED == connectionStatus) {
-            sleep(1000) //Ensure everything is set up
-            collectData()
-        }
-        else if (ConnectionStatus.DISCONNECTED == connectionStatus) {
-            cleanupCollectors()
-        }
     }
 
     private fun collectData() {

@@ -1,4 +1,4 @@
-package fi.ainon.polarAppis.worker.sensorDataCollector
+package fi.ainon.polarAppis.dataHandling.sensorDataCollector
 
 import com.polar.sdk.api.model.PolarSensorSetting
 import io.reactivex.rxjava3.disposables.Disposable

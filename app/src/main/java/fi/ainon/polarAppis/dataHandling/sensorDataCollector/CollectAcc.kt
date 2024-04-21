@@ -1,11 +1,11 @@
-package fi.ainon.polarAppis.worker.sensorDataCollector
+package fi.ainon.polarAppis.dataHandling.sensorDataCollector
 
 import android.util.Log
 import com.polar.sdk.api.model.PolarAccelerometerData
 import com.polar.sdk.api.model.PolarSensorSetting
 import fi.ainon.polarAppis.communication.polar.PolarConnection
 import fi.ainon.polarAppis.dataHandling.DataHandler
-import fi.ainon.polarAppis.worker.dataObject.AccData
+import fi.ainon.polarAppis.dataHandling.dataObject.AccData
 
 
 class CollectAcc(
@@ -26,7 +26,7 @@ class CollectAcc(
                         { polarAccelerometerData: PolarAccelerometerData ->
                             val samples = mutableListOf<AccData.AccDataSample>()
                             for (data in polarAccelerometerData.samples) {
-                                Log.d(TAG, "ACC    x: ${data.x} y: ${data.y} z: ${data.z} timeStamp: ${data.timeStamp}")
+                                //Log.d(TAG, "ACC    x: ${data.x} y: ${data.y} z: ${data.z} timeStamp: ${data.timeStamp}")
                                 samples.add(AccData.AccDataSample(data.timeStamp, data.x, data.y, data.z))
                             }
                             dataHandler.handleAcc(AccData(samples))
