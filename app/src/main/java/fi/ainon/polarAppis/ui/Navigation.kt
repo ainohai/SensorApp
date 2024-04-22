@@ -10,7 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import fi.ainon.polarAppis.ui.hrChart.HrChartScreen
-import fi.ainon.polarAppis.ui.rPeaksScreen.RPeaksScreen
+import fi.ainon.polarAppis.ui.hrv.HrvChartScreen
 import fi.ainon.polarAppis.ui.sensorinit.SensorInitScreen
 
 @Composable
@@ -22,7 +22,8 @@ fun MainNavigation() {
             Column(modifier = Modifier.fillMaxWidth()) {
                 SensorInitScreen(modifier = Modifier.padding(16.dp))
                 HrChartScreen(modifier = Modifier.padding(16.dp))
-                RPeaksScreen(modifier = Modifier.padding(16.dp))
+                HrvChartScreen(modifier = Modifier.padding(16.dp))
+                //RPeaksScreen(modifier = Modifier.padding(16.dp))
             }
         }
     }

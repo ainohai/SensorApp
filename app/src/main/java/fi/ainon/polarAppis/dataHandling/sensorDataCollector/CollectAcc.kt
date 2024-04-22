@@ -4,12 +4,12 @@ import android.util.Log
 import com.polar.sdk.api.model.PolarAccelerometerData
 import com.polar.sdk.api.model.PolarSensorSetting
 import fi.ainon.polarAppis.communication.polar.PolarConnection
-import fi.ainon.polarAppis.dataHandling.DataHandler
 import fi.ainon.polarAppis.dataHandling.dataObject.AccData
+import fi.ainon.polarAppis.dataHandling.handler.HandleAcc
 
 
 class CollectAcc(
-    private val dataHandler: DataHandler,
+    private val dataHandler: HandleAcc,
     private val polarConnection: PolarConnection,
     polarSettings: PolarSensorSetting
 ) : CommonCollect(polarSettings) {
@@ -29,7 +29,7 @@ class CollectAcc(
                                 //Log.d(TAG, "ACC    x: ${data.x} y: ${data.y} z: ${data.z} timeStamp: ${data.timeStamp}")
                                 samples.add(AccData.AccDataSample(data.timeStamp, data.x, data.y, data.z))
                             }
-                            dataHandler.handleAcc(AccData(samples))
+                            dataHandler.handle(AccData(samples))
                         },
                         { error: Throwable ->
                             Log.e(TAG, "ACC stream failed. Reason $error")

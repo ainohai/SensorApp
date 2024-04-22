@@ -6,7 +6,6 @@ import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import fi.ainon.polarAppis.communication.polar.PolarConnection
-import fi.ainon.polarAppis.dataHandling.DataHandler
 import fi.ainon.polarAppis.dataHandling.dataObject.ConnectionSetting
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -15,7 +14,6 @@ class ConnectionWorker(
     context: Context,
     workerParams: WorkerParameters,
     private val polarConnection: PolarConnection,
-    private val dataHandler: DataHandler
 ) : CoroutineWorker(context, workerParams) {
 
     private val TAG = "ConnectionWorker: "

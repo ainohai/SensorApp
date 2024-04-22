@@ -1,6 +1,8 @@
 package fi.ainon.polarAppis.data
 
-import fi.ainon.polarAppis.dataHandling.DataHandler
+import fi.ainon.polarAppis.dataHandling.dataObject.HrData
+import fi.ainon.polarAppis.dataHandling.handler.HandleEcg
+import fi.ainon.polarAppis.dataHandling.handler.HandleHr
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
@@ -9,29 +11,30 @@ import javax.inject.Inject
  */
 interface LiveDataRepository {
 
-    fun getHr() : Flow<Int>
-    fun getEcg() : Flow<List<Pair<Long, Int>>>
+    fun getHr() : Flow<HrData.HrSample>
+    fun getEcg() : Flow<Pair<Long, Int>>
 
 }
 
 class DefaultLiveDataRepository @Inject constructor(
-    private val dataHandler: DataHandler
+    private val handleHr: HandleHr,
+    private val handleEcg: HandleEcg
 ) : LiveDataRepository {
 
     private val TAG = "LiveDataRepository: "
-    private val hrFlow: Flow<Int>
-    private val ecgFlow: Flow<List<Pair<Long, Int>>>
+    private val hrFlow: Flow<HrData.HrSample>
+    private val ecgFlow: Flow<Pair<Long, Int>>
 
     init {
-        hrFlow = dataHandler.hrFlow()
-        ecgFlow = dataHandler.ecgFlow()
+        hrFlow = handleHr.dataFlow()
+        ecgFlow = handleEcg.ecgFlow()
     }
 
-    override fun getHr(): Flow<Int> {
+    override fun getHr(): Flow<HrData.HrSample> {
         return hrFlow;
     }
 
-    override fun getEcg(): Flow<List<Pair<Long, Int>>> {
+    override fun getEcg(): Flow<Pair<Long, Int>> {
         return ecgFlow
     }
 

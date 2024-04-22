@@ -8,9 +8,12 @@ import androidx.work.ListenableWorker
 import androidx.work.WorkerParameters
 import com.polar.sdk.api.model.PolarSensorSetting
 import fi.ainon.polarAppis.communication.polar.PolarConnection
-import fi.ainon.polarAppis.dataHandling.DataHandler
 import fi.ainon.polarAppis.dataHandling.dataObject.DataSetting
 import fi.ainon.polarAppis.dataHandling.dataObject.DataType
+import fi.ainon.polarAppis.dataHandling.handler.HandleAcc
+import fi.ainon.polarAppis.dataHandling.handler.HandleConnection
+import fi.ainon.polarAppis.dataHandling.handler.HandleEcg
+import fi.ainon.polarAppis.dataHandling.handler.HandleHr
 import fi.ainon.polarAppis.dataHandling.sensorDataCollector.CollectAcc
 import fi.ainon.polarAppis.dataHandling.sensorDataCollector.CollectEcg
 import fi.ainon.polarAppis.dataHandling.sensorDataCollector.CollectHr
@@ -22,7 +25,10 @@ class SensorDataWorker(
     context: Context,
     workerParams: WorkerParameters,
     private val polarConnection: PolarConnection,
-    private val dataHandler: DataHandler
+    private val connectionHandler: HandleConnection,
+    private val accHandler: HandleAcc,
+    private val ecgHandler: HandleEcg,
+    private val hrHandler: HandleHr
 ) : CoroutineWorker(context, workerParams) {
 
     private val TAG = "SensorWorker: "
@@ -41,7 +47,7 @@ class SensorDataWorker(
                 inputData.getString(DataSetting.COLLECTION_TIME_IN_S.name)?.toLongOrNull() ?: 30
 
             withTimeoutOrNull(collectionTime * 1000) {
-                dataHandler.isConnected().collect { isConnected ->
+                connectionHandler.dataFlow().collect { isConnected ->
                     Log.d(TAG, "Is connected: $isConnected")
                     if (isConnected) {
                         collectData()
@@ -78,13 +84,13 @@ class SensorDataWorker(
         Log.d(TAG, "Starting to collect data")
 
         if (isActivated(DataType.ECG)) {
-            ecg = CollectEcg(dataHandler, polarConnection, createEcgSettings())
+            ecg = CollectEcg(ecgHandler, polarConnection, createEcgSettings())
         }
         if (isActivated(DataType.ACC)) {
-            acc = CollectAcc(dataHandler, polarConnection, createAccSettings())
+            acc = CollectAcc(accHandler, polarConnection, createAccSettings())
         }
         if (isActivated(DataType.HR)) {
-            hr = CollectHr(dataHandler, polarConnection, createEcgSettings())
+            hr = CollectHr(hrHandler, polarConnection, createEcgSettings())
         }
     }
 

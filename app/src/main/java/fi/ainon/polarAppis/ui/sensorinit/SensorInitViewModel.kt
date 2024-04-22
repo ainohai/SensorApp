@@ -75,13 +75,14 @@ class DataItemTypeViewModel @Inject constructor(
 
     private fun createWorkRequest(workManager: WorkManager) {
 
-        val collectionTimeInS = 60L
+        val collectionTimeInS = 1 * 60L
         val sensorWorkRequest: OneTimeWorkRequest =
             OneTimeWorkRequestBuilder<SensorDataWorker>()
                 .setInputData(getH10SettingsWorkData(collectionTimeInS))
                 .addTag(SENSORTAG)
                 .build()
 
+        // Todo: If work manager is canceled in the middle of measurement, does not disconnect. Check if there is equivalent to finally.
         workManager
             .beginUniqueWork(CONNECTIONTAG, ExistingWorkPolicy.REPLACE, connectionWorkRequest(true))
             .then(sensorWorkRequest)
@@ -117,7 +118,7 @@ class DataItemTypeViewModel @Inject constructor(
             DataSetting.ACC_RANGE.name to "2",
             DataType.HR.name to "true",
             DataType.ECG.name to "true",
-            DataType.ACC.name to "true",
+            DataType.ACC.name to "false",
             DataSetting.COLLECTION_TIME_IN_S.name to collectionTime.toString())
 
     }

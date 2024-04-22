@@ -8,10 +8,13 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import fi.ainon.polarAppis.data.local.database.AppDatabase
+import fi.ainon.polarAppis.data.local.database.HrDataDao
 import fi.ainon.polarAppis.data.local.database.PolarInfoDataDao
 import javax.inject.Singleton
 
-
+/**
+ *  Do not trust this datastore as it may be destroyed.
+ */
 @Module
 @InstallIn(SingletonComponent::class)
 class DatabaseModule {
@@ -22,12 +25,18 @@ class DatabaseModule {
     }
 
     @Provides
+    fun provideHrDataDao(appDatabase: AppDatabase): HrDataDao {
+        return appDatabase.hrDataDao()
+    }
+
+    @Provides
     @Singleton
     fun provideAppDatabase(@ApplicationContext appContext: Context): AppDatabase {
         return Room.databaseBuilder(
             appContext,
             AppDatabase::class.java,
             "PolarAppis"
-        ).build()
+        ).fallbackToDestructiveMigration()
+            .build()
     }
 }

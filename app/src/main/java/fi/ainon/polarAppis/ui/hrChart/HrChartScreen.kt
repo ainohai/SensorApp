@@ -6,7 +6,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -20,7 +19,6 @@ import com.patrykandpatrick.vico.compose.cartesian.rememberVicoScrollState
 import com.patrykandpatrick.vico.core.cartesian.AutoScrollCondition
 import com.patrykandpatrick.vico.core.cartesian.Scroll
 import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
-import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
 
 
 @Composable
@@ -51,8 +49,8 @@ internal fun HrChartScreen(
     Column(modifier.verticalScroll(rememberScrollState())) {
         Row {
 
-            LaunchedEffect(Unit) { modelProducer().tryRunTransaction { lineSeries {
-                series(listOf(hrValue)) } } }
+            //LaunchedEffect(Unit) { modelProducer().tryRunTransaction { lineSeries {
+            //    series(listOf(hrValue)) } } }
             CartesianChartHost(
                 rememberCartesianChart(
                     rememberLineCartesianLayer(),

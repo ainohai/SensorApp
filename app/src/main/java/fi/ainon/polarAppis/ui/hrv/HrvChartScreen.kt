@@ -1,4 +1,4 @@
-package fi.ainon.polarAppis.ui.rPeaksScreen
+package fi.ainon.polarAppis.ui.hrv
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -33,84 +33,79 @@ import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
 
 
 @Composable
-fun RPeaksScreen(modifier: Modifier = Modifier, viewModel: RPeaksViewModel = hiltViewModel()) {
+fun HrvChartScreen(modifier: Modifier = Modifier, viewModel: HrvChartViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    //if (state is RPeaksUiState.CollectingData || state is RPeaksUiState.ShowOldData) {
-        RPeaksScreen(
-            modifier = modifier,
-            state = state,
-            modelProducer = viewModel::getModelProducer,
-            toggleShowChart = viewModel::toggleShowChart
-        )
-    //}
+    HrvChartScreen(
+        modifier = modifier,
+        state = state,
+        modelProducer = viewModel::getModelProducer,
+        toggleShowChart = viewModel::toggleShowChart
+    )
 }
 
 @Composable
-internal fun RPeaksScreen(
+internal fun HrvChartScreen(
     modifier: Modifier = Modifier,
-    state: RPeaksUiState,
+    state: HrvChartUiState,
     modelProducer: () -> CartesianChartModelProducer,
     toggleShowChart: (Boolean) -> Unit
 ) {
-    var expanded by remember{mutableStateOf(false)}
-    val ecgValue = when (state) {
-        is RPeaksUiState.ShowCollectedData -> state.hrValue
+    var expanded by remember { mutableStateOf(false) }
+    val hrvValue = when (state) {
+        is HrvChartUiState.ShowData -> state.hrvValue
         else -> {
             0
         }
     }
 
-    Column() {
+    Column(modifier.verticalScroll(rememberScrollState())) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 24.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Button(modifier = Modifier.width(196.dp), onClick = { expanded = !expanded; toggleShowChart(expanded) }) {
-                Text("Show ecg")
+            Button(
+                modifier = Modifier.width(196.dp),
+                onClick = { expanded = !expanded; toggleShowChart(expanded) }) {
+                Text("Show hrv")
             }
         }
-    }
 
-    if(state is RPeaksUiState.ShowCollectedData || state is RPeaksUiState.ShowOldData) {
+        if (state is HrvChartUiState.ShowData) {
+            Row {
 
-    Column(modifier.verticalScroll(rememberScrollState())) {
-        Row {
-
-            LaunchedEffect(Unit) {
-                modelProducer().tryRunTransaction {
-                    lineSeries {
-                        series(listOf(ecgValue))
+                LaunchedEffect(Unit) {
+                    modelProducer().tryRunTransaction {
+                        lineSeries {
+                            series(listOf(hrvValue))
+                        }
                     }
                 }
-            }
-            CartesianChartHost(
-                rememberCartesianChart(
-                    rememberLineCartesianLayer(),
-                    startAxis = rememberStartAxis(),
-                    bottomAxis = rememberBottomAxis(),
-                ),
-                modelProducer(),
-                scrollState = rememberVicoScrollState(
-                    initialScroll = Scroll.Absolute.End,
-                    autoScrollCondition = AutoScrollCondition { newModel,
-                                                                oldModel ->
-                        oldModel != null && oldModel.models.contains(
-                            newModel.models.elementAt(
-                                newModel.models.size - 1
+                CartesianChartHost(
+                    rememberCartesianChart(
+                        rememberLineCartesianLayer(),
+                        startAxis = rememberStartAxis(),
+                        bottomAxis = rememberBottomAxis(),
+                    ),
+                    modelProducer(),
+                    scrollState = rememberVicoScrollState(
+                        initialScroll = Scroll.Absolute.End,
+                        autoScrollCondition = AutoScrollCondition { newModel,
+                                                                    oldModel ->
+                            oldModel != null && oldModel.models.contains(
+                                newModel.models.elementAt(
+                                    newModel.models.size - 1
+                                )
                             )
-                        )
-                    }
+                        }
+                    )
                 )
-            )
-        }
-        if (state is RPeaksUiState.ShowCollectedData) {
+            }
             Row() {
-                Text("Num of ecgValues: $ecgValue")
+                Text("Current hrv: $hrvValue")
             }
         }
-    }
 
     }
 }
