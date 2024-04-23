@@ -75,7 +75,7 @@ class DataItemTypeViewModel @Inject constructor(
 
     private fun createWorkRequest(workManager: WorkManager) {
 
-        val collectionTimeInS = 1 * 60L
+        val collectionTimeInS = 15 * 60L
         val sensorWorkRequest: OneTimeWorkRequest =
             OneTimeWorkRequestBuilder<SensorDataWorker>()
                 .setInputData(getH10SettingsWorkData(collectionTimeInS))

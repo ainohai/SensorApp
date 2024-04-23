@@ -1,7 +1,6 @@
 package fi.ainon.polarAppis.ui
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -10,7 +9,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import fi.ainon.polarAppis.ui.hrChart.HrChartScreen
-import fi.ainon.polarAppis.ui.hrv.HrvChartScreen
 import fi.ainon.polarAppis.ui.sensorinit.SensorInitScreen
 
 @Composable
@@ -19,11 +17,9 @@ fun MainNavigation() {
 
     NavHost(navController = navController, startDestination = "main") {
         composable("main") {
-            Column(modifier = Modifier.fillMaxWidth()) {
+            Column() {
                 SensorInitScreen(modifier = Modifier.padding(16.dp))
                 HrChartScreen(modifier = Modifier.padding(16.dp))
-                HrvChartScreen(modifier = Modifier.padding(16.dp))
-                //RPeaksScreen(modifier = Modifier.padding(16.dp))
             }
         }
     }

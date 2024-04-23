@@ -28,11 +28,15 @@ class HrChartViewModel @Inject constructor(
     private val polarDataRepository: PolarDataRepository
 ) : ViewModel() {
 
-    private val MAX_DATASET_SIZE = 50
+    private val MAX_DATASET_SIZE = 1000
     private val TAG = "HrChartViewModel: "
     private var rrms = mutableListOf<Double>()
     private var hr = mutableListOf<Int>()
+    private var tickX = mutableListOf<Double>()
+    private var tickY = mutableListOf<Int>()
+    private var rollingRRs = 0.0
     private val modelProducer = CartesianChartModelProducer.build()
+    private val tickModelProducer = CartesianChartModelProducer.build()
     private var hrUpdateBuffer = 0
     private var lastrrsMs = Double.MAX_VALUE
     val uiState: StateFlow<HrChartUiState> = combine(
@@ -54,6 +58,11 @@ class HrChartViewModel @Inject constructor(
                             series(rrms)
                         }
                     }
+                    tickModelProducer.tryRunTransaction {
+                        lineSeries {
+                            series(tickX)
+                        }
+                    }
                     hrUpdateBuffer = 0
                 }
             }
@@ -67,16 +76,27 @@ class HrChartViewModel @Inject constructor(
         .catch { emit(HrChartUiState.Error(it)) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HrChartUiState.NoData)
 
+    //Todo: only for a test
     private fun handlerrsMs(value: HrData.HrSample) {
         if (value.rrsMs.isNotEmpty()) {
-                val mean = value.rrsMs.sum() / value.rrsMs.size.toDouble()
+            val mean = value.rrsMs.sum() / value.rrsMs.size.toDouble()
+            rollingRRs = if(tickX.size % 2 == 0) (mean / 1000) else (-1* mean / 1000)
+            tickX.add(rollingRRs)
+            tickY.add(value.hr)
+
             if (lastrrsMs != Double.MAX_VALUE) {
                 rrms.add(abs(lastrrsMs - mean))
             }
             lastrrsMs = mean
+
             if (rrms.size > MAX_DATASET_SIZE) {
                 rrms =
                     rrms.slice(rrms.lastIndex - MAX_DATASET_SIZE..rrms.lastIndex).toMutableList()
+
+                tickX =
+                    tickX.slice(tickX.lastIndex - MAX_DATASET_SIZE..tickX.lastIndex).toMutableList()
+                tickY =
+                    tickY.slice(tickY.lastIndex - MAX_DATASET_SIZE..tickY.lastIndex).toMutableList()
             }
         }
     }
@@ -93,6 +113,10 @@ class HrChartViewModel @Inject constructor(
 
     fun getModelProducer(): CartesianChartModelProducer {
         return modelProducer
+    }
+
+    fun getTickModelProducer(): CartesianChartModelProducer {
+        return tickModelProducer
     }
 
 }
