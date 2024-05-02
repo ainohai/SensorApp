@@ -4,6 +4,7 @@ import android.util.Log
 import fi.ainon.polarAppis.communication.dataServer.ServerDataConnection
 import fi.ainon.polarAppis.dataHandling.dataObject.DataType
 import fi.ainon.polarAppis.dataHandling.dataObject.HrData
+import fi.ainon.polarAppis.dataHandling.di.DataHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay

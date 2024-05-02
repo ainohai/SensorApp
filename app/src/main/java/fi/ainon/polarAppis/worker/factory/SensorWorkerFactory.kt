@@ -5,6 +5,7 @@ import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import fi.ainon.polarAppis.communication.polar.PolarConnection
+import fi.ainon.polarAppis.dataHandling.Notifier
 import fi.ainon.polarAppis.dataHandling.handler.HandleAcc
 import fi.ainon.polarAppis.dataHandling.handler.HandleConnection
 import fi.ainon.polarAppis.dataHandling.handler.HandleEcg
@@ -18,7 +19,8 @@ class SensorWorkerFactory (
     private val connectionHandler: HandleConnection,
     private val accHandler: HandleAcc,
     private val ecgHandler: HandleEcg,
-    private val hrHandler: HandleHr
+    private val hrHandler: HandleHr,
+    private val notifier: Notifier
 ) : WorkerFactory() {
 
     override fun createWorker(
@@ -29,7 +31,7 @@ class SensorWorkerFactory (
 
         return when(workerClassName) {
             SensorDataWorker::class.java.name ->
-                SensorDataWorker(appContext, workerParameters, polarConnection, connectionHandler, accHandler, ecgHandler, hrHandler)
+                SensorDataWorker(appContext, workerParameters, polarConnection, connectionHandler, accHandler, ecgHandler, hrHandler, notifier)
             ConnectionWorker::class.java.name ->
                 ConnectionWorker(appContext, workerParameters, polarConnection)
             else ->

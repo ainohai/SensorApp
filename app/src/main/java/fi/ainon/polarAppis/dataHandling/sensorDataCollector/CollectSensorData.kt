@@ -22,7 +22,7 @@ abstract class CommonCollect (private val polarSettings: PolarSensorSetting): Co
     abstract fun streamData(polarSettings: PolarSensorSetting)
 
     override fun isDisposed(): Boolean {
-        return disposable?.isDisposed ?: true
+        return disposable == null || disposable?.isDisposed ?: true
     }
 
     protected fun setDisposable(disposable: Disposable) {
@@ -30,5 +30,6 @@ abstract class CommonCollect (private val polarSettings: PolarSensorSetting): Co
     }
     protected fun dispose() {
         disposable?.dispose()
+        disposable = null
     }
 }

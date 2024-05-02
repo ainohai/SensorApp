@@ -31,8 +31,11 @@
 <!--    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
 -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
 
     <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -55,12 +58,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-<!--        <service
-            android:name=".MyMediaPlaybackService"
-            android:foregroundServiceType="connectedDevice"
-            android:exported="false">
-        </service>
--->
+
+        <receiver android:name=".dataHandling.AlarmReceiver" android:exported="false">
+           <!-- <intent-filter>
+                <action android:name="fi.ainon.polarAppis.dataHandling.ScheduleAlarm.ALARM_INTENT" />
+            </intent-filter>-->
+        </receiver>
+
+
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"
@@ -72,6 +77,10 @@
                 android:value="androidx.startup"
                 tools:node="remove" />
         </provider>
+
+        <meta-data
+            android:name="fi.ainon.polarAppis.push.smallicon"
+            android:resource="@drawable/push_icon" />
 
     </application>
 

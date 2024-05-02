@@ -27,7 +27,7 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
 
-interface PolarConnection {
+interface SenseConnection {
 
     fun getHr(): Flowable<PolarHrData>
     fun getEcg(settings: PolarSensorSetting): Flowable<PolarEcgData>
@@ -45,7 +45,7 @@ interface PolarConnection {
 }
 
 
-class DefaultPolarConnection @Inject constructor(
+abstract class SenseConnection @Inject constructor(
     @ApplicationContext appContext: Context
 ) : PolarConnection {
 

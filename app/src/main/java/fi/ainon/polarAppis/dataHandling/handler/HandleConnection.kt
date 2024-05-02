@@ -3,6 +3,7 @@ package fi.ainon.polarAppis.dataHandling.handler
 import android.util.Log
 import fi.ainon.polarAppis.communication.polar.PolarConnection
 import fi.ainon.polarAppis.dataHandling.dataObject.ConnectionStatus
+import fi.ainon.polarAppis.dataHandling.di.DataHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharedFlow

@@ -4,6 +4,7 @@ import android.util.Log
 import fi.ainon.polarAppis.communication.dataServer.ServerDataConnection
 import fi.ainon.polarAppis.dataHandling.dataObject.AccData
 import fi.ainon.polarAppis.dataHandling.dataObject.DataType
+import fi.ainon.polarAppis.dataHandling.di.DataHandler
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json

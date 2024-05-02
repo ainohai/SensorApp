@@ -42,7 +42,7 @@ android {
 
     defaultConfig {
         applicationId = "fi.ainon.polarAppis"
-        minSdk = 24
+        minSdk = 34
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -73,6 +73,7 @@ android {
 
             buildConfigField("String", "BACKEND_URL", polarAppisProperties["serverUrl"].toString())
             buildConfigField("String", "POLAR_H10", polarAppisProperties["polarH10Id"].toString())
+            buildConfigField("String", "POLAR_SENSE", polarAppisProperties["polarSenseId"].toString())
 
         }
 

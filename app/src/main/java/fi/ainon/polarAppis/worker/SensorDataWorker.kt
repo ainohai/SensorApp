@@ -8,8 +8,11 @@ import androidx.work.ListenableWorker
 import androidx.work.WorkerParameters
 import com.polar.sdk.api.model.PolarSensorSetting
 import fi.ainon.polarAppis.communication.polar.PolarConnection
-import fi.ainon.polarAppis.dataHandling.dataObject.DataSetting
+import fi.ainon.polarAppis.data.PolarDataRepository
+import fi.ainon.polarAppis.dataHandling.Notifier
+import fi.ainon.polarAppis.dataHandling.dataObject.CollectionSetting
 import fi.ainon.polarAppis.dataHandling.dataObject.DataType
+import fi.ainon.polarAppis.dataHandling.dataObject.PolarDataSetting
 import fi.ainon.polarAppis.dataHandling.handler.HandleAcc
 import fi.ainon.polarAppis.dataHandling.handler.HandleConnection
 import fi.ainon.polarAppis.dataHandling.handler.HandleEcg
@@ -28,30 +31,45 @@ class SensorDataWorker(
     private val connectionHandler: HandleConnection,
     private val accHandler: HandleAcc,
     private val ecgHandler: HandleEcg,
-    private val hrHandler: HandleHr
+    private val hrHandler: HandleHr,
+    private val notifier: Notifier,
+    private val polarDataRepository: PolarDataRepository
 ) : CoroutineWorker(context, workerParams) {
 
+    private val WAITING_FOR_CONNECTION_S = 30;
     private val TAG = "SensorWorker: "
     private var ecg : CollectEcg? = null;
     private var acc : CollectAcc? = null;
     private var hr : CollectHr? = null;
 
 
+
     @SuppressLint("CheckResult")
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
 
+            notifier.postNotification(
+                (inputData.getString(CollectionSetting.WORKER_START_TIME.name)
+                    ?: "") + " " +tags.joinToString(", ")
+            )
+
             Log.d(TAG, "Starting doWork in sensor worker")
 
-            val collectionTime =
-                inputData.getString(DataSetting.COLLECTION_TIME_IN_S.name)?.toLongOrNull() ?: 30
+            Log.d(TAG, "Worker triggering connect")
+            polarConnection.connect(true)
 
-            withTimeoutOrNull(collectionTime * 1000) {
-                connectionHandler.dataFlow().collect { isConnected ->
-                    Log.d(TAG, "Is connected: $isConnected")
-                    if (isConnected) {
-                        collectData()
-                        Log.d(TAG, "Already connected, starting to collect data")
+            val collectionTime =
+                inputData.getString(CollectionSetting.COLLECTION_TIME_IN_MIN.name)?.toLongOrNull() ?: 30
+
+            if (ecg?.isDisposed() != false && acc?.isDisposed() != false && hr?.isDisposed() != false) {
+
+                withTimeoutOrNull(collectionTime * 1000) {
+                    connectionHandler.dataFlow().collect { isConnected ->
+                        Log.d(TAG, "Is connected: $isConnected")
+                        if (isConnected) {
+                            collectData()
+                            Log.d(TAG, "Already connected, starting to collect data")
+                        }
                     }
                 }
             }
@@ -67,6 +85,7 @@ class SensorDataWorker(
         finally {
             cleanupCollectors()
             Log.d(TAG, "End worker")
+            polarConnection.connect(false)
             Result.success()
         }
 
@@ -83,13 +102,13 @@ class SensorDataWorker(
     private fun collectData() {
         Log.d(TAG, "Starting to collect data")
 
-        if (isActivated(DataType.ECG)) {
+        if (isActivated(DataType.ECG) && ecg == null) {
             ecg = CollectEcg(ecgHandler, polarConnection, createEcgSettings())
         }
-        if (isActivated(DataType.ACC)) {
+        if (isActivated(DataType.ACC) && acc == null) {
             acc = CollectAcc(accHandler, polarConnection, createAccSettings())
         }
-        if (isActivated(DataType.HR)) {
+        if (isActivated(DataType.HR) && hr == null) {
             hr = CollectHr(hrHandler, polarConnection, createEcgSettings())
         }
     }
@@ -100,11 +119,11 @@ class SensorDataWorker(
 
     fun createEcgSettings(): PolarSensorSetting {
         val ecgResolution =
-            inputData.getString(DataSetting.ECG_RESOLUTION.name) ?: ListenableWorker.Result.failure()
+            inputData.getString(PolarDataSetting.ECG_RESOLUTION.name) ?: ListenableWorker.Result.failure()
         val ecgSampleRate =
-            inputData.getString(DataSetting.ECG_SAMPLE_RATE.name) ?: ListenableWorker.Result.failure()
+            inputData.getString(PolarDataSetting.ECG_SAMPLE_RATE.name) ?: ListenableWorker.Result.failure()
         val ecgRange =
-            inputData.getString(DataSetting.ECG_RANGE.name) ?: ListenableWorker.Result.failure()
+            inputData.getString(PolarDataSetting.ECG_RANGE.name) ?: ListenableWorker.Result.failure()
 
         val polarSettings = PolarSensorSetting(
             mapOf(
@@ -119,17 +138,36 @@ class SensorDataWorker(
     fun createAccSettings(): PolarSensorSetting {
 
         val accResolution =
-            inputData.getString(DataSetting.ACC_RESOLUTION.name) ?: ListenableWorker.Result.failure()
+            inputData.getString(PolarDataSetting.ACC_RESOLUTION.name) ?: ListenableWorker.Result.failure()
         val accSampleRate =
-            inputData.getString(DataSetting.ACC_SAMPLE_RATE.name) ?: ListenableWorker.Result.failure()
+            inputData.getString(PolarDataSetting.ACC_SAMPLE_RATE.name) ?: ListenableWorker.Result.failure()
         val accRange =
-            inputData.getString(DataSetting.ACC_RANGE.name) ?: ListenableWorker.Result.failure()
+            inputData.getString(PolarDataSetting.ACC_RANGE.name) ?: ListenableWorker.Result.failure()
 
         val polarSettings = PolarSensorSetting(
             mapOf(
                 Pair(PolarSensorSetting.SettingType.SAMPLE_RATE, (accSampleRate as String).toInt()),
                 Pair(PolarSensorSetting.SettingType.RESOLUTION, (accResolution as String).toInt()),
                 Pair(PolarSensorSetting.SettingType.RANGE, (accRange as String).toInt()),
+            )
+        )
+        return polarSettings
+    }
+
+    fun createPpgSettings(): PolarSensorSetting {
+
+        val ppgResolution =
+            inputData.getString(PolarDataSetting.PPG_RESOLUTION.name) ?: ListenableWorker.Result.failure()
+        val ppgSampleRate =
+            inputData.getString(PolarDataSetting.PPG_SAMPLE_RATE.name) ?: ListenableWorker.Result.failure()
+        val ppgChannels =
+            inputData.getString(PolarDataSetting.PPG_CHANNELS.name) ?: ListenableWorker.Result.failure()
+
+        val polarSettings = PolarSensorSetting(
+            mapOf(
+                Pair(PolarSensorSetting.SettingType.SAMPLE_RATE, (ppgSampleRate as String).toInt()),
+                Pair(PolarSensorSetting.SettingType.RESOLUTION, (ppgResolution as String).toInt()),
+                Pair(PolarSensorSetting.SettingType.CHANNELS, (ppgChannels as String).toInt()),
             )
         )
         return polarSettings

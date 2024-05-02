@@ -16,4 +16,6 @@
 
 <resources>
     <string name="app_name">polarAppis</string>
+    <string name="core_notifications_pol_notification_channel_name">PolarAppisNotif</string>
+    <string name="core_notifications_pol_notification_channel_description">PolarAppisNotifDesc</string>
 </resources>
