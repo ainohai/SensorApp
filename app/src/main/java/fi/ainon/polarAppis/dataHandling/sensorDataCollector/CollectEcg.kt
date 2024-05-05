@@ -2,26 +2,24 @@ package fi.ainon.polarAppis.dataHandling.sensorDataCollector
 
 import android.util.Log
 import com.polar.sdk.api.model.PolarEcgData
-import com.polar.sdk.api.model.PolarSensorSetting
-import fi.ainon.polarAppis.communication.polar.PolarConnection
 import fi.ainon.polarAppis.dataHandling.dataObject.EcgData
 import fi.ainon.polarAppis.dataHandling.handler.HandleEcg
+import io.reactivex.rxjava3.core.Flowable
 
 
 class CollectEcg(
     private val dataHandler: HandleEcg,
-    private val polarConnection: PolarConnection,
-    polarSettings: PolarSensorSetting
-) : CommonCollect(polarSettings) {
+    private val ecgStream: Flowable<PolarEcgData>,
+) : CommonCollect() {
 
     private val TAG = "CollectEcg: "
 
     init {
         collectData()
     }
-    override fun streamData(polarSettings: PolarSensorSetting) {
+    override fun streamData() {
         //Polar returns rx flowable.
-         val ecgDisposable = polarConnection.getEcg(polarSettings).subscribe(
+         val ecgDisposable = ecgStream.subscribe(
             { polarEcgData: PolarEcgData ->
                 val samples = mutableListOf<EcgData.EcgDataSample>()
                 for (data in polarEcgData.samples) {

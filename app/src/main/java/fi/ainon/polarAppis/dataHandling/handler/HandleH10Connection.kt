@@ -1,11 +1,11 @@
 package fi.ainon.polarAppis.dataHandling.handler
 
 import android.util.Log
-import fi.ainon.polarAppis.communication.polar.PolarConnection
 import fi.ainon.polarAppis.dataHandling.dataObject.ConnectionStatus
 import fi.ainon.polarAppis.dataHandling.di.DataHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.catch
@@ -17,19 +17,21 @@ import javax.inject.Singleton
 
 
 @Singleton
-class HandleConnection @Inject constructor(
-    private val polarConnection: PolarConnection,
-) : DataHandler<ConnectionStatus, Boolean> {
+class HandleH10Connection @Inject constructor() : DataHandler<ConnectionStatus, Boolean> {
 
-    private val connectionStatus: SharedFlow<ConnectionStatus> = polarConnection.connectionStatus()
-    private val TAG = "HandleConnection: "
+    private val TAG = "HandleH10Connection: "
+    private var _connectionStatus: SharedFlow<ConnectionStatus> = MutableSharedFlow<ConnectionStatus>(replay = 1)
 
     override fun handle(data: ConnectionStatus) {
-        throw NotImplementedError()
+        //TODO not implemented yet.
+    }
+    fun setConnectionFlow(data: SharedFlow<ConnectionStatus>) {
+        Log.d(TAG, "Sets conneection to handler")
+        _connectionStatus = data
     }
 
     override fun dataFlow(): SharedFlow<Boolean> {
-        return connectionStatus
+        return _connectionStatus
             .filter { status -> status == ConnectionStatus.CONNECTED || status == ConnectionStatus.DISCONNECTED }
             .map { connectionStatus ->
                 connectionStatus == ConnectionStatus.CONNECTED

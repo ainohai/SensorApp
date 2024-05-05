@@ -13,8 +13,6 @@ import com.polar.sdk.api.model.PolarHrData
 import com.polar.sdk.api.model.PolarPpgData
 import com.polar.sdk.api.model.PolarPpiData
 import com.polar.sdk.api.model.PolarSensorSetting
-import dagger.hilt.android.qualifiers.ApplicationContext
-import fi.ainon.polarAppis.BuildConfig
 import fi.ainon.polarAppis.dataHandling.dataObject.ConnectionStatus
 import io.reactivex.rxjava3.core.Flowable
 import kotlinx.coroutines.CoroutineScope
@@ -25,13 +23,8 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import java.util.UUID
-import javax.inject.Inject
 
-interface PolarConnection {
-
-    fun getHr(): Flowable<PolarHrData>
-    fun getEcg(settings: PolarSensorSetting): Flowable<PolarEcgData>
-    fun getAcc(settings: PolarSensorSetting): Flowable<PolarAccelerometerData>
+interface PolarConnectionApi {
 
     fun onResume()
     fun onDestroy()
@@ -40,25 +33,27 @@ interface PolarConnection {
     fun toggleConnect()
     fun connect(shouldBeConnected: Boolean)
 
-    fun getPpi(): Flowable<PolarPpiData>
-    fun getPpg(settings: PolarSensorSetting): Flowable<PolarPpgData>
+    fun startHrStream(): Flowable<PolarHrData>
+    fun startEcgStream(settings: PolarSensorSetting): Flowable<PolarEcgData>
+    fun startAccStream(settings: PolarSensorSetting): Flowable<PolarAccelerometerData>
+    fun startPpgStream(settings: PolarSensorSetting): Flowable<PolarPpgData>
+    fun startPpiStream(): Flowable<PolarPpiData>
 }
 
 
-class DefaultPolarConnection @Inject constructor(
-    @ApplicationContext appContext: Context
-) : PolarConnection {
+class DefaultPolarConnectionApi (
+    appContext: Context,
+    deviceId: String
+) : PolarConnectionApi {
 
-    private var H10_DEVICE_ID = BuildConfig.POLAR_H10
-    private var SENSE_DEVICE_ID = BuildConfig.POLAR_SENSE
-    private var deviceId = H10_DEVICE_ID
+    private var deviceId = deviceId
     private val API_LOGGER_TAG: String = "POLAR API kutsu: "
     private val TAG = "PolarConnection: "
 
     private var deviceConnectionStatus = ConnectionStatus.DISCONNECTED
 
-    private var _connectionStatus = MutableSharedFlow<ConnectionStatus>(replay = 1)
-    private var connectionStatus = _connectionStatus.asSharedFlow()
+    private val _connectionStatus = MutableSharedFlow<ConnectionStatus>(replay = 1)
+    private val connectionStatus = _connectionStatus.asSharedFlow()
 
     private val api: PolarBleApi by lazy {
         // Notice all features are enabled
@@ -127,32 +122,13 @@ class DefaultPolarConnection @Inject constructor(
         return deviceConnectionStatus == ConnectionStatus.CONNECTED
     }
 
-    //TODO: Refactor this
     override fun toggleConnect() {
-        try {
-            if (deviceConnectionStatus == ConnectionStatus.CONNECTED) {
-                Log.d(TAG, "Disconnecting device")
-                api.disconnectFromDevice(deviceId)
-            } else {
-                Log.d(TAG, "Asking to connect device")
-                api.connectToDevice(deviceId)
-            }
-        } catch (polarInvalidArgument: PolarInvalidArgument) {
-            val attempt = if (deviceConnectionStatus == ConnectionStatus.CONNECTED) {
-                "disconnect"
-            } else {
-                "connect"
-            }
-            Log.e(TAG, "Failed to $attempt. Reason $polarInvalidArgument ")
-        }
+        val shouldBeConnected = !isConnected()
+        tryConnect(shouldBeConnected, deviceId)
     }
 
     override fun connect(shouldBeConnected: Boolean) {
         try {
-            //connecting h10
-            tryConnect(shouldBeConnected, deviceId)
-            //connecting sense
-            deviceId = SENSE_DEVICE_ID
             tryConnect(shouldBeConnected, deviceId)
         } catch (polarInvalidArgument: PolarInvalidArgument) {
             val attempt = if (deviceConnectionStatus == ConnectionStatus.CONNECTED) {
@@ -172,26 +148,6 @@ class DefaultPolarConnection @Inject constructor(
             Log.d(TAG, "Disconnecting device")
             api.disconnectFromDevice(deviceId)
         }
-    }
-
-    override fun getHr(): Flowable<PolarHrData> {
-        return api.startHrStreaming(deviceId)
-    }
-
-    override fun getEcg(settings: PolarSensorSetting): Flowable<PolarEcgData> {
-        return api.startEcgStreaming(deviceId, settings)
-    }
-
-    override fun getAcc(settings: PolarSensorSetting): Flowable<PolarAccelerometerData> {
-        return api.startAccStreaming(deviceId, settings)
-    }
-
-    override fun getPpg(settings: PolarSensorSetting): Flowable<PolarPpgData> {
-        return api.startPpgStreaming(deviceId, settings)
-    }
-
-    override fun getPpi(): Flowable<PolarPpiData> {
-        return api.startPpiStreaming(deviceId)
     }
 
     override fun onResume() {
@@ -223,4 +179,22 @@ class DefaultPolarConnection @Inject constructor(
             }
         }
     }
+
+    override fun startHrStream(): Flowable<PolarHrData> {
+        return api.startHrStreaming(deviceId)
+    }
+    override fun startEcgStream(settings: PolarSensorSetting): Flowable<PolarEcgData> {
+        return api.startEcgStreaming(deviceId, settings)
+    }
+    override fun startAccStream(settings: PolarSensorSetting): Flowable<PolarAccelerometerData> {
+        return api.startAccStreaming(deviceId, settings)
+    }
+    override fun startPpgStream(settings: PolarSensorSetting): Flowable<PolarPpgData> {
+        return api.startPpgStreaming(deviceId, settings)
+    }
+
+    override fun startPpiStream(): Flowable<PolarPpiData> {
+        return api.startPpiStreaming(deviceId)
+    }
+
 }

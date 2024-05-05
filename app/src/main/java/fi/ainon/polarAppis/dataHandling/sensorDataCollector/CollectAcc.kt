@@ -2,26 +2,24 @@ package fi.ainon.polarAppis.dataHandling.sensorDataCollector
 
 import android.util.Log
 import com.polar.sdk.api.model.PolarAccelerometerData
-import com.polar.sdk.api.model.PolarSensorSetting
-import fi.ainon.polarAppis.communication.polar.PolarConnection
 import fi.ainon.polarAppis.dataHandling.dataObject.AccData
 import fi.ainon.polarAppis.dataHandling.handler.HandleAcc
+import io.reactivex.rxjava3.core.Flowable
 
 
 class CollectAcc(
     private val dataHandler: HandleAcc,
-    private val polarConnection: PolarConnection,
-    polarSettings: PolarSensorSetting
-) : CommonCollect(polarSettings) {
+    private val accStream: Flowable<PolarAccelerometerData>,
+) : CommonCollect() {
 
     private val TAG = "CollectAcc: "
 
     init {
         collectData()
     }
-    override fun streamData(polarSettings: PolarSensorSetting) {
+    override fun streamData() {
 
-        val accDisposable = polarConnection.getAcc(polarSettings)
+        val accDisposable = accStream
                     .subscribe(
                         { polarAccelerometerData: PolarAccelerometerData ->
                             val samples = mutableListOf<AccData.AccDataSample>()

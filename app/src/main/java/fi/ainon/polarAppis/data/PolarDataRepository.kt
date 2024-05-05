@@ -1,12 +1,14 @@
 package fi.ainon.polarAppis.data
 
 import android.util.Log
+import fi.ainon.polarAppis.communication.polar.PolarConnection
 import fi.ainon.polarAppis.data.local.database.HrData
 import fi.ainon.polarAppis.data.local.database.HrDataDao
 import fi.ainon.polarAppis.data.local.database.PolarInfoData
 import fi.ainon.polarAppis.data.local.database.PolarInfoDataDao
-import fi.ainon.polarAppis.dataHandling.handler.HandleConnection
-import fi.ainon.polarAppis.dataHandling.handler.HandleHr
+import fi.ainon.polarAppis.dataHandling.handler.HandleH10Connection
+import fi.ainon.polarAppis.dataHandling.handler.HandleH10Hr
+import fi.ainon.polarAppis.dataHandling.handler.HandleH10Rrs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -28,15 +30,18 @@ interface PolarDataRepository {
 class DefaultPolarDataRepository @Inject constructor(
     private val polarInfoDataDao: PolarInfoDataDao,
     private val hrDataDao: HrDataDao,
-    private val handleHr: HandleHr,
-    private val handleConnection: HandleConnection
+    private val handleH10Hr: HandleH10Hr,
+    private val handleH10Connection: HandleH10Connection,
+    private val handleH10Rrs: HandleH10Rrs,
+    private val polarConnection: PolarConnection
 ) : PolarDataRepository {
 
     private val TAG = "PolarDataRepository: "
 
     init {
-        listenToConnection(handleConnection.dataFlow())
-        listenToRRMSSD(handleHr.RRMSSD())
+        polarConnection.cleanupCollectors() //Todo: ensures everything is set up.
+        listenToConnection(handleH10Connection.dataFlow())
+        listenToRRMSSD(handleH10Rrs.dataFlow())
     }
 
     override val connection: Flow<Boolean> =

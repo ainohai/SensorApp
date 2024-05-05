@@ -1,8 +1,6 @@
 package fi.ainon.polarAppis.dataHandling.handler
 
 import android.util.Log
-import fi.ainon.polarAppis.communication.dataServer.ServerDataConnection
-import fi.ainon.polarAppis.dataHandling.dataObject.DataType
 import fi.ainon.polarAppis.dataHandling.dataObject.HrData
 import fi.ainon.polarAppis.dataHandling.di.DataHandler
 import kotlinx.coroutines.CoroutineScope
@@ -10,27 +8,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import javax.inject.Inject
-import javax.inject.Singleton
 import kotlin.math.abs
 import kotlin.math.sqrt
 
+class HandleH10Rrs @Inject constructor() : DataHandler<HrData, Double> {
 
-@Singleton
-class HandleHr @Inject constructor(
-    private val serverDataConnection: ServerDataConnection,
-) : DataHandler<HrData, HrData.HrSample> {
-
-
-    private val TAG = "DataHandler: "
-    private var _hrFlow = MutableSharedFlow<HrData.HrSample>()
-    private var hrFlow = _hrFlow.asSharedFlow()
+    private val TAG = "HandleH10Rrs: "
     private var _RRMSSDFlow = MutableSharedFlow<Double>()
     private var RRMSSDFlow = _RRMSSDFlow.asSharedFlow()
 
@@ -48,34 +34,18 @@ class HandleHr @Inject constructor(
 
         Log.d(TAG, "Handle hr")
 
-        val jsonString = Json.encodeToString(data)
-        val byteData = jsonString.toByteArray(Charsets.UTF_16)
-        serverDataConnection.addData(byteData, DataType.HR)
-
         val rrsValues = data.samples.flatMap { hrSample -> hrSample.rrsMs }
         rrsBuffer.addAll(rrsValues)
-        // Hr does not contain timepoint
-        CoroutineScope(Dispatchers.Default).launch {
-            try {
-                _hrFlow.emitAll(data.samples.asFlow())
-            } catch (e: Exception) {
-                Log.e(TAG, "Emit hr flow failed.", e)
-            }
-        }
+
     }
 
-    override fun dataFlow(): SharedFlow<HrData.HrSample> {
-        return hrFlow
-    }
-
-    fun RRMSSD(): SharedFlow<Double> {
+    override fun dataFlow(): SharedFlow<Double> {
         return RRMSSDFlow
     }
 
     private suspend fun launchHrvCalc() {
         while (true) {
             delay(CALC_HRV_DELAY)
-
 
             if (rrsBuffer.isNotEmpty()) {
                 val lastIndex = rrsBuffer.lastIndex
@@ -105,4 +75,5 @@ class HandleHr @Inject constructor(
             _RRMSSDFlow.emit(root)
         }
     }
+
 }

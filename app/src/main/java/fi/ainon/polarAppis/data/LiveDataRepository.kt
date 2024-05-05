@@ -1,7 +1,7 @@
 package fi.ainon.polarAppis.data
 
 import fi.ainon.polarAppis.dataHandling.dataObject.HrData
-import fi.ainon.polarAppis.dataHandling.handler.HandleHr
+import fi.ainon.polarAppis.dataHandling.handler.HandleH10Hr
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
@@ -15,16 +15,16 @@ interface LiveDataRepository {
 }
 
 class DefaultLiveDataRepository @Inject constructor(
-    private val handleHr: HandleHr,
+    private val handleH10Hr: HandleH10Hr,
 
-) : LiveDataRepository {
+    ) : LiveDataRepository {
 
     private val TAG = "LiveDataRepository: "
     private val hrFlow: Flow<HrData.HrSample>
 
 
     init {
-        hrFlow = handleHr.dataFlow()
+        hrFlow = handleH10Hr.dataFlow()
     }
 
     override fun getHr(): Flow<HrData.HrSample> {

@@ -5,25 +5,17 @@ import androidx.work.DelegatingWorkerFactory
 import dagger.hilt.android.qualifiers.ApplicationContext
 import fi.ainon.polarAppis.communication.polar.PolarConnection
 import fi.ainon.polarAppis.dataHandling.SystemTrayNotifier
-import fi.ainon.polarAppis.dataHandling.handler.HandleAcc
-import fi.ainon.polarAppis.dataHandling.handler.HandleConnection
-import fi.ainon.polarAppis.dataHandling.handler.HandleEcg
-import fi.ainon.polarAppis.dataHandling.handler.HandleHr
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class AppisDelegatingWorkerFactory @Inject constructor(
     @ApplicationContext private val context: Context,
-    polarConnection: PolarConnection,
-    connectionHandler: HandleConnection,
-    accHandler: HandleAcc,
-    ecgHandler: HandleEcg,
-    hrHandler: HandleHr,
-    private val notifier: SystemTrayNotifier
+    private val notifier: SystemTrayNotifier,
+    h10Connection: PolarConnection
 ) : DelegatingWorkerFactory() {
     init {
-        addFactory(SensorWorkerFactory(context, polarConnection, connectionHandler, accHandler, ecgHandler, hrHandler, notifier))
+        addFactory(SensorWorkerFactory(context,notifier, h10Connection))
         // Add here other factories that you may need in your application
     }
 }

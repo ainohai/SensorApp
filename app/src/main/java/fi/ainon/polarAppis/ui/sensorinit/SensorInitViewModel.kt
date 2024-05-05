@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import fi.ainon.polarAppis.communication.polar.PolarConnection
+import fi.ainon.polarAppis.communication.polar.PolarH10Connection
 import fi.ainon.polarAppis.data.PolarDataRepository
 import fi.ainon.polarAppis.dataHandling.ScheduleAlarm
 import fi.ainon.polarAppis.dataHandling.WorkerInitializer
@@ -23,9 +23,9 @@ import javax.inject.Inject
 class DataItemTypeViewModel @Inject constructor(
     @ApplicationContext private val appContext: Context,
     private val polarDataRepository: PolarDataRepository,
-    private val polarConnection: PolarConnection,
     private val workerInitializer: WorkerInitializer,
-    private val scheduleAlarm: ScheduleAlarm
+    private val scheduleAlarm: ScheduleAlarm,
+    private val polarH10Connection: PolarH10Connection
 ) : ViewModel() {
 
     var collectionTimeInMin = 5L
@@ -37,7 +37,7 @@ class DataItemTypeViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Loading)
 
     fun connect() {
-        polarConnection.toggleConnect()
+        polarH10Connection.toggleConnection()
     }
 
     fun periodic() {

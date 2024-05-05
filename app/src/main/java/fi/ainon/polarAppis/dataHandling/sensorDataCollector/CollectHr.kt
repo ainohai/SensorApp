@@ -2,17 +2,15 @@ package fi.ainon.polarAppis.dataHandling.sensorDataCollector
 
 import android.util.Log
 import com.polar.sdk.api.model.PolarHrData
-import com.polar.sdk.api.model.PolarSensorSetting
-import fi.ainon.polarAppis.communication.polar.PolarConnection
 import fi.ainon.polarAppis.dataHandling.dataObject.HrData
-import fi.ainon.polarAppis.dataHandling.handler.HandleHr
+import fi.ainon.polarAppis.dataHandling.handler.HandleH10Hr
+import io.reactivex.rxjava3.core.Flowable
 
 
 class CollectHr(
-    private val dataHandler: HandleHr,
-    private val polarConnection: PolarConnection,
-    polarSettings: PolarSensorSetting
-) : CommonCollect(polarSettings) {
+    private val dataHandler: HandleH10Hr,
+    private val hrStream: Flowable<PolarHrData>,
+) : CommonCollect() {
 
     private val TAG = "CollectHr: "
 
@@ -20,8 +18,8 @@ class CollectHr(
         collectData()
     }
 
-    override fun streamData(polarSettings: PolarSensorSetting) {
-         val hrDisposable = polarConnection.getHr().subscribe(
+    override fun streamData() {
+         val hrDisposable = hrStream.subscribe(
             { polarHrData: PolarHrData ->
                 val samples = mutableListOf<HrData.HrSample>()
                 for (data in polarHrData.samples) {
@@ -38,6 +36,4 @@ class CollectHr(
         )
         setDisposable(hrDisposable)
     }
-
-
 }

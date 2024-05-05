@@ -13,9 +13,10 @@ import fi.ainon.polarAppis.dataHandling.dataObject.ConnectionStatus
 import fi.ainon.polarAppis.dataHandling.dataObject.EcgData
 import fi.ainon.polarAppis.dataHandling.dataObject.HrData
 import fi.ainon.polarAppis.dataHandling.handler.HandleAcc
-import fi.ainon.polarAppis.dataHandling.handler.HandleConnection
 import fi.ainon.polarAppis.dataHandling.handler.HandleEcg
-import fi.ainon.polarAppis.dataHandling.handler.HandleHr
+import fi.ainon.polarAppis.dataHandling.handler.HandleH10Connection
+import fi.ainon.polarAppis.dataHandling.handler.HandleH10Hr
+import fi.ainon.polarAppis.dataHandling.handler.HandleH10Rrs
 import kotlinx.coroutines.flow.SharedFlow
 import javax.inject.Singleton
 
@@ -28,9 +29,13 @@ interface DataHandlerModule {
     @Binds
     fun bindEcgHandler(defaultDataHandler: HandleEcg): DataHandler<EcgData, Int>
     @Binds
-    fun bindHrHandler(defaultDataHandler: HandleHr): DataHandler<HrData, HrData.HrSample>
+    fun bindHrHandler(defaultDataHandler: HandleH10Hr): DataHandler<HrData, HrData.HrSample>
     @Binds
-    fun bindConnectionHandler(defaultDataHandler: HandleConnection): DataHandler<ConnectionStatus, Boolean>
+    fun bindConnectionHandler(defaultDataHandler: HandleH10Connection): DataHandler<ConnectionStatus, Boolean>
+
+    @Binds
+    fun bindH10RrsHandler(defaultDataHandler: HandleH10Rrs): DataHandler<HrData, Double>
+
     @Binds
     @Singleton
     fun bindWorkerInitializer(sensorWorkerInitializer: SensorWorkerInitializer): WorkerInitializer
@@ -38,6 +43,12 @@ interface DataHandlerModule {
     fun bindScheduleAlarm(scheduleAlarm: DefaultScheduleAlarm) : ScheduleAlarm
 }
 
+/**
+ *
+ * Data handler formats the data and passes it for server api calls and offers data flow to those who are interested in listening.
+ * All collected data types have their own handlers.
+ *
+ */
 interface DataHandler<T,S> {
     fun handle(data: T)
     fun dataFlow() :SharedFlow<S>
