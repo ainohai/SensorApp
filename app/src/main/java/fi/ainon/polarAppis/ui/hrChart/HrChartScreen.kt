@@ -16,13 +16,12 @@ import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberBottomAxis
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberStartAxis
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
-import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineSpec
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 import com.patrykandpatrick.vico.compose.cartesian.rememberVicoScrollState
 import com.patrykandpatrick.vico.core.cartesian.AutoScrollCondition
-import com.patrykandpatrick.vico.core.cartesian.DefaultPointConnector
 import com.patrykandpatrick.vico.core.cartesian.Scroll
 import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
+import fi.ainon.polarAppis.ui.ecgChart.EcgChartScreen
 import fi.ainon.polarAppis.ui.hrv.HrvChartScreen
 
 
@@ -80,7 +79,7 @@ internal fun HrChartScreen(
                 ),
             )
         }
-        Row() {
+/*        Row() {
 
             CartesianChartHost(
                 rememberCartesianChart(
@@ -105,7 +104,7 @@ internal fun HrChartScreen(
                     }
                 )
             )
-        }
+        }*/
         if (state is HrChartUiState.CollectingData) {
             Row() {
                 Text("Current hr: $hrValue")
@@ -113,6 +112,7 @@ internal fun HrChartScreen(
         }
 
         HrvChartScreen(modifier = Modifier.padding(16.dp))
+        EcgChartScreen(modifier = Modifier.padding(16.dp))
 
 
     }

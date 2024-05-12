@@ -6,19 +6,21 @@ import fi.ainon.polarAppis.dataHandling.di.DataHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.math.abs
 import kotlin.math.sqrt
 
+@Singleton
 class HandleH10Rrs @Inject constructor() : DataHandler<HrData, Double> {
 
     private val TAG = "HandleH10Rrs: "
     private var _RRMSSDFlow = MutableSharedFlow<Double>()
-    private var RRMSSDFlow = _RRMSSDFlow.asSharedFlow()
 
     private var rrsBuffer: MutableList<Int> = mutableListOf()
 
@@ -30,17 +32,20 @@ class HandleH10Rrs @Inject constructor() : DataHandler<HrData, Double> {
         }
     }
 
-    override fun handle(data: HrData) {
+    override suspend fun handle(dataFlow: Flow<HrData>) {
 
-        Log.d(TAG, "Handle hr")
+        Log.d(TAG, "Handle rrs")
 
-        val rrsValues = data.samples.flatMap { hrSample -> hrSample.rrsMs }
-        rrsBuffer.addAll(rrsValues)
-
+        CoroutineScope(Dispatchers.Default).launch {
+            dataFlow.collect { data ->
+                val rrsValues = data.samples.flatMap { hrSample -> hrSample.rrsMs }
+                rrsBuffer.addAll(rrsValues)
+            }
+        }
     }
 
     override fun dataFlow(): SharedFlow<Double> {
-        return RRMSSDFlow
+        return _RRMSSDFlow.asSharedFlow()
     }
 
     private suspend fun launchHrvCalc() {

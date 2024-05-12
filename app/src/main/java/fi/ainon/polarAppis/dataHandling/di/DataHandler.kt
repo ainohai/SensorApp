@@ -17,6 +17,7 @@ import fi.ainon.polarAppis.dataHandling.handler.HandleEcg
 import fi.ainon.polarAppis.dataHandling.handler.HandleH10Connection
 import fi.ainon.polarAppis.dataHandling.handler.HandleH10Hr
 import fi.ainon.polarAppis.dataHandling.handler.HandleH10Rrs
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import javax.inject.Singleton
 
@@ -27,7 +28,7 @@ interface DataHandlerModule {
     @Binds
     fun bindAccHandler(defaultDataHandler: HandleAcc): DataHandler<AccData, AccData>
     @Binds
-    fun bindEcgHandler(defaultDataHandler: HandleEcg): DataHandler<EcgData, Int>
+    fun bindEcgHandler(defaultDataHandler: HandleEcg): DataHandler<EcgData, EcgData.EcgDataSample>
     @Binds
     fun bindHrHandler(defaultDataHandler: HandleH10Hr): DataHandler<HrData, HrData.HrSample>
     @Binds
@@ -50,7 +51,7 @@ interface DataHandlerModule {
  *
  */
 interface DataHandler<T,S> {
-    fun handle(data: T)
+    suspend fun handle(data: Flow<T>)
     fun dataFlow() :SharedFlow<S>
 
 }

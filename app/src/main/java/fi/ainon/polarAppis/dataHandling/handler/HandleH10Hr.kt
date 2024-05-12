@@ -7,6 +7,7 @@ import fi.ainon.polarAppis.dataHandling.dataObject.HrData
 import fi.ainon.polarAppis.dataHandling.di.DataHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asFlow
@@ -29,20 +30,21 @@ class HandleH10Hr @Inject constructor(
     private var _hrFlow = MutableSharedFlow<HrData.HrSample>()
     private var hrFlow = _hrFlow.asSharedFlow()
 
-    override fun handle(data: HrData) {
+    override suspend fun handle(dataFlow: Flow<HrData>) {
 
         Log.d(TAG, "Handle hr")
 
-        val jsonString = Json.encodeToString(data)
-        val byteData = jsonString.toByteArray(Charsets.UTF_16)
-        serverDataConnection.addData(byteData, DataType.HR)
-
-        // Hr does not contain timepoint
         CoroutineScope(Dispatchers.Default).launch {
-            try {
-                _hrFlow.emitAll(data.samples.asFlow())
-            } catch (e: Exception) {
-                Log.e(TAG, "Emit hr flow failed.", e)
+            dataFlow.collect { data ->
+                val jsonString = Json.encodeToString(data)
+                val byteData = jsonString.toByteArray(Charsets.UTF_16)
+                serverDataConnection.addData(byteData, DataType.HR)
+
+                try {
+                    _hrFlow.emitAll(data.samples.asFlow())
+                } catch (e: Exception) {
+                    Log.e(TAG, "Emit hr flow failed.", e)
+                }
             }
         }
     }

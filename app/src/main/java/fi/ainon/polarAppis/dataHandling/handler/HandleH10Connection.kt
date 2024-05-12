@@ -5,6 +5,7 @@ import fi.ainon.polarAppis.dataHandling.dataObject.ConnectionStatus
 import fi.ainon.polarAppis.dataHandling.di.DataHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,7 +23,7 @@ class HandleH10Connection @Inject constructor() : DataHandler<ConnectionStatus, 
     private val TAG = "HandleH10Connection: "
     private var _connectionStatus: SharedFlow<ConnectionStatus> = MutableSharedFlow<ConnectionStatus>(replay = 1)
 
-    override fun handle(data: ConnectionStatus) {
+    override suspend fun handle(data: Flow<ConnectionStatus>) {
         //TODO not implemented yet.
     }
     fun setConnectionFlow(data: SharedFlow<ConnectionStatus>) {

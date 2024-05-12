@@ -5,7 +5,11 @@ import fi.ainon.polarAppis.communication.dataServer.ServerDataConnection
 import fi.ainon.polarAppis.dataHandling.dataObject.AccData
 import fi.ainon.polarAppis.dataHandling.dataObject.DataType
 import fi.ainon.polarAppis.dataHandling.di.DataHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
@@ -18,14 +22,17 @@ class HandleAcc @Inject constructor(
 ) : DataHandler<AccData, AccData> {
 
     private val TAG = "HandlerAcc: "
-    override fun handle(data: AccData) {
+    override suspend fun handle(dataFlow: Flow<AccData>) {
 
         Log.d(TAG, "Handle acc")
 
-        val jsonString = Json.encodeToString(data)
-        val byteData = jsonString.toByteArray(Charsets.UTF_16)
-        serverDataConnection.addData(byteData, DataType.ACC)
-
+        CoroutineScope(Dispatchers.Default).launch {
+            dataFlow.collect { data ->
+                val jsonString = Json.encodeToString(data)
+                val byteData = jsonString.toByteArray(Charsets.UTF_16)
+                serverDataConnection.addData(byteData, DataType.ACC)
+            }
+        }
         //Todo: Other handling
     }
 

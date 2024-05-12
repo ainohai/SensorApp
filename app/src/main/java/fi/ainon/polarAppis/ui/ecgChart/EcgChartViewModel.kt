@@ -1,4 +1,4 @@
-package fi.ainon.polarAppis.ui.hrv
+package fi.ainon.polarAppis.ui.ecgChart
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
@@ -7,7 +7,8 @@ import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
 import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import fi.ainon.polarAppis.data.PolarDataRepository
+import fi.ainon.polarAppis.communication.polar.PolarConnection
+import fi.ainon.polarAppis.data.LiveDataRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -18,42 +19,43 @@ import javax.inject.Inject
 
 //TODO: REFACTOR UI
 @HiltViewModel
-class HrvChartViewModel @Inject constructor(
+class EcgChartViewModel @Inject constructor(
     @ApplicationContext private val appContext: Context,
-    private val polarDataRepository: PolarDataRepository,
+    private val liveDataRepository: LiveDataRepository,
+    private val polarConnection: PolarConnection
 ) : ViewModel() {
 
-    val TAG = "HrvChartViewModel: "
-    private val showChart: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    private var hrvValues = mutableListOf<Double>()
-    private var hrvTimepoint = mutableListOf<Long>()
+    val TAG = "EcgChartViewModel: "
+    private val showChart: MutableStateFlow<Boolean> = MutableStateFlow(true)
+    private var ecgValues = mutableListOf<Int>()
+    private var ecgTimepoint = mutableListOf<Long>()
     private val modelProducer = CartesianChartModelProducer.build()
-    val uiState: StateFlow<HrvChartUiState> = combine(
-        polarDataRepository.RRMSSD, showChart
+    val uiState: StateFlow<EcgChartUiState> = combine(
+        liveDataRepository.getEcg(), showChart
     ) { values, showChart ->
 
-        if(showChart) {
-            hrvValues = values.map { value -> value.hr1 }.toMutableList()
-            hrvTimepoint = values.map { value -> value.timepoint / 1000 }.toMutableList()
+        if (showChart) {
+            ecgValues.add(values.voltage)
+            ecgTimepoint.add(values.timeStamp)
 
             updateGraph()
 
-            if (hrvValues.isNotEmpty()) HrvChartUiState.ShowData(hrvValues.last()) else HrvChartUiState.NoGraph
+            if (ecgValues.isNotEmpty()) EcgChartUiState.ShowData(ecgValues.last()) else EcgChartUiState.NoGraph
         } else {
-            HrvChartUiState.NoGraph
+            EcgChartUiState.NoGraph
         }
     }
-        .catch { emit(HrvChartUiState.Error(it)) }
+        .catch { emit(EcgChartUiState.Error(it)) }
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5000),
-            HrvChartUiState.ShowData(0.0)
+            EcgChartUiState.ShowData(0)
         )
 
     private fun updateGraph() {
         modelProducer.tryRunTransaction {
             lineSeries {
-                series(hrvValues)
+                series(ecgValues)
             }
         }
     }
@@ -72,8 +74,8 @@ class HrvChartViewModel @Inject constructor(
 
 }
 
-sealed interface HrvChartUiState {
-    data class Error(val throwable: Throwable) : HrvChartUiState
-    data class ShowData(val hrvValue: Double) : HrvChartUiState
-    object NoGraph : HrvChartUiState
+sealed interface EcgChartUiState {
+    data class Error(val throwable: Throwable) : EcgChartUiState
+    data class ShowData(val ecgValue: Int) : EcgChartUiState
+    object NoGraph : EcgChartUiState
 }

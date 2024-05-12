@@ -5,13 +5,17 @@ import android.util.Log
 import com.polar.sdk.api.model.PolarSensorSetting
 import dagger.hilt.android.qualifiers.ApplicationContext
 import fi.ainon.polarAppis.BuildConfig
+import fi.ainon.polarAppis.dataHandling.di.DataHandler
 import fi.ainon.polarAppis.dataHandling.handler.HandleAcc
 import fi.ainon.polarAppis.dataHandling.handler.HandleEcg
 import fi.ainon.polarAppis.dataHandling.handler.HandleH10Connection
 import fi.ainon.polarAppis.dataHandling.handler.HandleH10Hr
+import fi.ainon.polarAppis.dataHandling.handler.HandleH10Rrs
 import fi.ainon.polarAppis.dataHandling.sensorDataCollector.CollectAcc
 import fi.ainon.polarAppis.dataHandling.sensorDataCollector.CollectEcg
 import fi.ainon.polarAppis.dataHandling.sensorDataCollector.CollectHr
+import fi.ainon.polarAppis.dataHandling.sensorDataCollector.CollectSensorData
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -42,6 +46,7 @@ class PolarH10Connection @Inject constructor(
     private val ecgHandler: HandleEcg,
     private val hrHandler: HandleH10Hr,
     private val connectionHandler: HandleH10Connection,
+    private val h10RrsHandler: HandleH10Rrs
 ) : PolarConnection {
 
     private val TAG = "H10Connection: "
@@ -87,17 +92,32 @@ class PolarH10Connection @Inject constructor(
         }
     }
 
-    private fun collectData(measureHr: Boolean, measureEcg: Boolean, measureAcc: Boolean, ecgSettings: PolarSensorSetting, accSetting: PolarSensorSetting) {
+    private suspend fun collectData(measureHr: Boolean, measureEcg: Boolean, measureAcc: Boolean, ecgSettings: PolarSensorSetting, accSetting: PolarSensorSetting) {
         Log.d(TAG, "Starting to collect data")
 
-        if (measureHr && hr == null) {
-            hr = CollectHr(hrHandler, api.startHrStream())
+        if (measureHr) {
+            hr = CollectHr(api.startHrStream())
+            val hrFlow = collectData(hrHandler, hr)
+            if (hrFlow != null) {
+                h10RrsHandler.handle(hrFlow)
+            }
+
         }
-        if (measureEcg && ecg == null) {
-            ecg = CollectEcg(ecgHandler, api.startEcgStream(ecgSettings))
+        if (measureEcg) {
+            ecg = CollectEcg(api.startEcgStream(ecgSettings))
+            collectData(ecgHandler, ecg)
         }
-        if (measureAcc && acc == null) {
-            acc = CollectAcc(accHandler, api.startAccStream(accSetting))
+        if (measureAcc) {
+            acc = CollectAcc(api.startAccStream(accSetting))
+            collectData(accHandler, acc)
         }
+    }
+
+    private suspend fun<T,S> collectData(dataHandler: DataHandler<T,S>, collector: CollectSensorData<T>?): Flow<T>? {
+        val dataFlow = collector?.streamData()
+        if (dataFlow != null) {
+            dataHandler.handle(dataFlow)
+        }
+        return dataFlow
     }
 }

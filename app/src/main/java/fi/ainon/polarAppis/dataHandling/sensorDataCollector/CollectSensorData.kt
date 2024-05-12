@@ -1,28 +1,24 @@
 package fi.ainon.polarAppis.dataHandling.sensorDataCollector
 
 import io.reactivex.rxjava3.disposables.Disposable
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Sensor data collector handles collecting data in case of RxJava flows used by polar api, as they take care of disposing data flows.
  * Other datatypes are handled directly from connection without collectors.
  */
-interface CollectSensorData {
-    fun collectData()
+interface CollectSensorData<T> {
+    fun streamData(): Flow<T>
     fun isDisposed(): Boolean
     fun stopCollect()
 }
 
-abstract class CommonCollect (): CollectSensorData {
+abstract class CommonCollect<T> (): CollectSensorData<T> {
     private var disposable: Disposable? = null;
-
-    override fun collectData() {
-        streamData()
-    }
 
     override fun stopCollect() {
         dispose()
     }
-    abstract fun streamData()
 
     override fun isDisposed(): Boolean {
         return disposable == null || disposable?.isDisposed ?: true
